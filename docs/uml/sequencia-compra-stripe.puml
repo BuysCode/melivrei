@@ -1,0 +1,77 @@
+@startuml sequencia-compra-stripe
+
+title MeLivrei — Compra com confirmação do Stripe
+
+actor Comprador
+participant "Frontend\nNext.js" as Frontend
+participant "API\nNestJS" as API
+database "PostgreSQL\nvia Prisma" as DB
+participant "Stripe" as Stripe
+participant "Webhook\nStripe" as Webhook
+actor Anunciante
+
+== Início da compra ==
+
+Comprador -> Frontend: Seleciona anúncio e solicita compra
+Frontend -> API: POST /negotiations
+API -> DB: Consulta anúncio e proprietário
+DB --> API: Anúncio disponível
+
+alt anúncio indisponível
+    API --> Frontend: Erro de disponibilidade
+    Frontend --> Comprador: Exibe anúncio indisponível
+else anúncio disponível
+    API -> DB: Cria negociação PENDING_PAYMENT
+    API -> DB: Reserva anúncio temporariamente
+    API -> Stripe: Cria PaymentIntent
+    Stripe --> API: Retorna clientSecret e paymentId
+    API -> DB: Salva Payment PENDING
+    API --> Frontend: Retorna dados para pagamento
+    Frontend --> Comprador: Exibe checkout Stripe
+end
+
+== Confirmação do pagamento ==
+
+Comprador -> Stripe: Conclui pagamento
+Stripe --> Comprador: Resultado do checkout
+Stripe -> Webhook: Envia evento payment_intent.succeeded
+Webhook -> API: Encaminha evento e assinatura
+API -> API: Valida assinatura e idempotência
+
+alt evento inválido ou já processado
+    API -> DB: Registra rejeição ou ignora duplicidade
+    API --> Webhook: Retorna erro ou confirmação idempotente
+else evento válido
+    API -> DB: Registra PaymentEvent
+    API -> DB: Atualiza Payment para APPROVED
+    API -> DB: Atualiza Negotiation para APPROVED
+    API -> DB: Atualiza Listing para RESERVED
+    API -> DB: Registra AuditEvent
+    API --> Webhook: Retorna HTTP 200
+end
+
+== Conclusão da negociação ==
+
+Comprador -> Frontend: Consulta status da compra
+Frontend -> API: GET /negotiations/{id}
+API -> DB: Consulta negociação e histórico
+DB --> API: Dados atualizados
+API --> Frontend: Retorna negociação APPROVED
+Frontend --> Comprador: Exibe pagamento confirmado
+
+Anunciante -> Frontend: Registra entrega/conclusão
+Frontend -> API: POST /negotiations/{id}/complete
+API -> DB: Valida pagamento aprovado
+API -> DB: Atualiza negociação COMPLETED
+API -> DB: Atualiza anúncio COMPLETED
+API -> DB: Registra AuditEvent
+API --> Frontend: Confirma conclusão
+Frontend --> Anunciante: Exibe negociação concluída
+
+note over Comprador, Stripe
+  O comprovante visual do comprador não confirma a compra.
+  A confirmação válida é o evento assinado recebido pelo backend.
+end note
+
+@enduml
+

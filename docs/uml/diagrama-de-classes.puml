@@ -1,0 +1,313 @@
+@startuml diagrama-de-classes
+
+title Brique Literário — Diagrama de Classes do Domínio
+
+skinparam classAttributeIconSize 0
+skinparam monochrome false
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Identidade e acesso" {
+    class User {
+        +id: UUID
+        +name: String
+        +email: String
+        -passwordHash: String
+        +role: UserRole
+        +status: UserStatus
+        +createdAt: DateTime
+        +updateProfile(): void
+    }
+
+    enum UserRole {
+        USER
+        ADMIN
+    }
+
+    enum UserStatus {
+        ACTIVE
+        SUSPENDED
+        INACTIVE
+    }
+}
+
+package "Catálogo" {
+    class Book {
+        +id: UUID
+        +title: String
+        +author: String
+        +isbn: String
+        +genre: String
+    }
+
+    class Listing {
+        +id: UUID
+        +description: String
+        +condition: BookCondition
+        +mode: ListingMode
+        +price: Money
+        +depositAmount: Money
+        +loanDays: Integer
+        +status: ListingStatus
+        +publish(): void
+        +reserve(): void
+        +close(): void
+    }
+
+    class ListingImage {
+        +id: UUID
+        +url: String
+        +altText: String
+    }
+
+    enum BookCondition {
+        NEW
+        LIKE_NEW
+        GOOD
+        FAIR
+        DAMAGED
+    }
+
+    enum ListingMode {
+        SALE
+        TRADE
+        LOAN
+    }
+
+    enum ListingStatus {
+        AVAILABLE
+        RESERVED
+        IN_NEGOTIATION
+        UNAVAILABLE
+        COMPLETED
+        CANCELLED
+    }
+}
+
+package "Negociações" {
+    class Negotiation {
+        +id: UUID
+        +type: NegotiationType
+        +status: NegotiationStatus
+        +createdAt: DateTime
+        +accept(): void
+        +reject(): void
+        +cancel(): void
+        +complete(): void
+    }
+
+    class TradeOffer {
+        +id: UUID
+        +message: String
+        +status: TradeOfferStatus
+        +accept(): void
+        +reject(): void
+    }
+
+    enum NegotiationType {
+        SALE
+        TRADE
+        LOAN
+    }
+
+    enum NegotiationStatus {
+        PENDING
+        PENDING_PAYMENT
+        PENDING_DEPOSIT
+        APPROVED
+        ACTIVE
+        RETURNED
+        UNDER_REVIEW
+        REJECTED
+        CANCELLED
+        COMPLETED
+    }
+
+    enum TradeOfferStatus {
+        PENDING
+        ACCEPTED
+        REJECTED
+        CANCELLED
+    }
+}
+
+package "Pagamentos" {
+    class Payment {
+        +id: UUID
+        +provider: PaymentProvider
+        +providerPaymentId: String
+        +amount: Money
+        +purpose: PaymentPurpose
+        +status: PaymentStatus
+        +createdAt: DateTime
+        +approve(): void
+        +refund(): void
+    }
+
+    class PaymentEvent {
+        +id: UUID
+        +providerEventId: String
+        +eventType: String
+        +payloadHash: String
+        +receivedAt: DateTime
+        +processedAt: DateTime
+        +process(): void
+    }
+
+    enum PaymentProvider {
+        STRIPE
+    }
+
+    enum PaymentPurpose {
+        SALE
+        LOAN_DEPOSIT
+        DAMAGE_FEE
+        LATE_FEE
+    }
+
+    enum PaymentStatus {
+        PENDING
+        APPROVED
+        REFUSED
+        EXPIRED
+        REFUNDED
+        PARTIALLY_REFUNDED
+    }
+}
+
+package "Empréstimos e conflitos" {
+    class Loan {
+        +id: UUID
+        +startDate: DateTime
+        +dueDate: DateTime
+        +returnedAt: DateTime
+        +status: LoanStatus
+        +registerDelivery(): void
+        +registerReturn(): void
+        +calculateLateFee(): Money
+    }
+
+    class Damage {
+        +id: UUID
+        +type: DamageType
+        +description: String
+        +fixedAmount: Money
+    }
+
+    class DepositSettlement {
+        +id: UUID
+        +damageAmount: Money
+        +lateAmount: Money
+        +retainedAmount: Money
+        +releasedAmount: Money
+        +status: SettlementStatus
+        +calculate(): Money
+        +release(): void
+        +retain(): void
+    }
+
+    class Dispute {
+        +id: UUID
+        +reason: String
+        +status: DisputeStatus
+        +decision: String
+        +openedAt: DateTime
+        +resolvedAt: DateTime
+        +resolve(): void
+    }
+
+    enum LoanStatus {
+        PENDING
+        ACTIVE
+        RETURNED
+        OVERDUE
+        UNDER_REVIEW
+        CLOSED
+    }
+
+    enum DamageType {
+        TORN_PAGE
+        WATER_DAMAGE
+        DAMAGED_COVER
+        UNREPORTED_MARKING
+        OTHER
+    }
+
+    enum SettlementStatus {
+        PENDING
+        RELEASED
+        PARTIALLY_RETAINED
+        FULLY_RETAINED
+        UNDER_REVIEW
+    }
+
+    enum DisputeStatus {
+        OPEN
+        UNDER_REVIEW
+        RESOLVED
+        REJECTED
+    }
+}
+
+package "Auditoria" {
+    class AuditEvent {
+        +id: UUID
+        +action: String
+        +entityType: String
+        +entityId: UUID
+        +metadata: JSON
+        +createdAt: DateTime
+    }
+}
+
+User "1" -- "0..*" Listing : owns >
+User "1" -- "0..*" Negotiation : participates >
+User "1" -- "0..*" TradeOffer : proposes >
+User "1" -- "0..*" Dispute : opens >
+User "1" -- "0..*" AuditEvent : triggers >
+
+Book "1" -- "0..*" Listing : advertised as >
+Listing "1" *-- "0..*" ListingImage : contains >
+Listing "1" -- "0..*" Negotiation : receives >
+
+Negotiation "1" *-- "0..1" TradeOffer : has >
+Negotiation "1" *-- "0..1" Payment : requires >
+Negotiation "1" *-- "0..1" Loan : creates >
+Negotiation "1" -- "0..*" AuditEvent : records >
+
+Payment "1" *-- "0..*" PaymentEvent : receives >
+Loan "1" *-- "0..*" Damage : records >
+Loan "1" *-- "0..1" DepositSettlement : settles >
+Loan "1" -- "0..*" Dispute : may generate >
+Dispute "1" -- "0..*" AuditEvent : records >
+
+User --> UserRole
+User --> UserStatus
+Listing --> BookCondition
+Listing --> ListingMode
+Listing --> ListingStatus
+Negotiation --> NegotiationType
+Negotiation --> NegotiationStatus
+TradeOffer --> TradeOfferStatus
+Payment --> PaymentProvider
+Payment --> PaymentPurpose
+Payment --> PaymentStatus
+Loan --> LoanStatus
+Damage --> DamageType
+DepositSettlement --> SettlementStatus
+Dispute --> DisputeStatus
+
+note right of Payment
+  A aplicação não armazena
+  dados completos de cartão.
+  A confirmação é recebida
+  por webhook do Stripe.
+end note
+
+note bottom of DepositSettlement
+  O valor da multa por dano é fixo.
+  O valor por atraso é calculado
+  conforme o tempo excedido.
+end note
+
+@enduml

@@ -1,0 +1,99 @@
+@startuml sequencia-emprestimo
+title MeLivrei — Empréstimo com caução e devolução
+actor Interessado
+actor Proprietário
+actor Administrador
+participant "Frontend\nNext.js" as Frontend
+participant "API\nNestJS" as API
+database "PostgreSQL\nvia Prisma" as DB
+participant "Stripe" as Stripe
+participant "Webhook\nStripe" as Webhook
+== Solicitação do empréstimo ==
+Interessado -> Frontend: Seleciona anúncio de empréstimo
+Frontend -> API: POST /loans
+API -> DB: Consulta anúncio, prazo e caução
+DB --> API: Dados do anúncio
+alt anúncio inválido ou indisponível
+    API --> Frontend: Recusa solicitação
+    Frontend --> Interessado: Exibe motivo da recusa
+else condições válidas
+    API -> DB: Cria Negotiation PENDING_DEPOSIT
+    API -> DB: Cria Loan PENDING
+    API -> Stripe: Cria cobrança da caução
+    Stripe --> API: Retorna paymentId
+    API -> DB: Salva Payment PENDING
+    API --> Frontend: Retorna dados para pagamento
+    Frontend --> Interessado: Exibe checkout Stripe
+end
+== Confirmação da caução ==
+Interessado -> Stripe: Conclui pagamento da caução
+Stripe -> Webhook: Envia payment_intent.succeeded
+Webhook -> API: Encaminha evento assinado
+API -> API: Valida assinatura e idempotência
+alt evento inválido ou duplicado
+    API -> DB: Rejeita ou ignora evento
+    API --> Webhook: Retorna resposta idempotente
+else evento válido
+    API -> DB: Atualiza Payment para APPROVED
+    API -> DB: Atualiza DepositSettlement para HELD
+    API -> DB: Atualiza Negotiation para APPROVED
+    API -> DB: Atualiza Loan para READY_FOR_DELIVERY
+    API -> DB: Registra AuditEvent
+    API --> Webhook: Retorna HTTP 200
+end
+== Entrega do livro ==
+Proprietário -> Frontend: Confirma entrega
+Frontend -> API: POST /loans/{id}/delivery
+API -> DB: Valida caução aprovada
+API -> DB: Atualiza Loan para ACTIVE
+API -> DB: Atualiza Listing para RESERVED
+API -> DB: Registra AuditEvent
+API --> Frontend: Confirma empréstimo ativo
+Frontend --> Proprietário: Exibe confirmação
+== Devolução e avaliação ==
+Interessado -> Proprietário: Devolve o livro
+Proprietário -> Frontend: Informa data e condição do livro
+Frontend -> API: POST /loans/{id}/return
+API -> DB: Consulta prazo e dados do empréstimo
+DB --> API: DueDate e condições
+API -> API: Calcula atraso
+API -> DB: Consulta tabela de danos
+alt sem dano e sem atraso
+    API -> DB: Cria DepositSettlement com retenção zero
+    API -> Stripe: Solicita liberação/estorno integral da caução
+    Stripe --> API: Confirma operação
+    API -> DB: Atualiza Loan para CLOSED
+    API -> DB: Atualiza DepositSettlement para RELEASED
+else dano ou atraso identificado
+    API -> DB: Registra Damage e/ou lateAmount
+    API -> DB: Calcula valor retido
+    API -> DB: Atualiza DepositSettlement para PARTIALLY_RETAINED
+    API -> DB: Atualiza Loan para RETURNED
+    API -> DB: Registra AuditEvent
+end
+== Contestação opcional ==
+Interessado -> Frontend: Contesta retenção
+Frontend -> API: POST /disputes
+API -> DB: Cria Dispute OPEN
+API -> DB: Atualiza Loan para UNDER_REVIEW
+API -> DB: Atualiza DepositSettlement para UNDER_REVIEW
+API --> Frontend: Confirma abertura da contestação
+Administrador -> Frontend: Consulta contestação
+Frontend -> API: GET /disputes/{id}
+API -> DB: Consulta histórico, danos e pagamentos
+DB --> API: Dados da contestação
+API --> Frontend: Exibe informações para análise
+Administrador -> Frontend: Registra decisão e justificativa
+Frontend -> API: PATCH /disputes/{id}/resolve
+API -> DB: Atualiza Dispute para RESOLVED
+API -> DB: Atualiza valor final da caução
+API -> Stripe: Solicita estorno conforme decisão
+Stripe --> API: Confirma estorno
+API -> DB: Registra AuditEvent
+API --> Frontend: Exibe decisão final
+note over API, DB
+  Danos possuem valores fixos definidos na tabela.
+  A multa por atraso varia conforme o tempo excedido.
+  A decisão e os cálculos devem permanecer auditáveis.
+end note
+@enduml

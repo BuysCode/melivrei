@@ -1,0 +1,42 @@
+@startuml c4-contexto
+
+title MeLivrei — C4: Diagrama de Contexto
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam rectangle {
+    BorderColor #334155
+    FontColor #0F172A
+    RoundCorner 12
+}
+
+rectangle "Visitante" as visitante #E8F0FE
+rectangle "Usuário autenticado\n(comprador, anunciante, interessado ou proprietário)" as usuario #E8F0FE
+rectangle "Administrador" as admin #E8F0FE
+
+rectangle "MeLivrei\nMarketplace web de livros usados\n\nPermite publicar anúncios, pesquisar livros,\nnegociar vendas, trocas e empréstimos,\ncontrolar pagamentos, cauções e conflitos." as sistema #DCFCE7
+
+rectangle "Stripe\nGateway externo de pagamentos" as stripe #FFF7ED
+
+visitante --> sistema : Consulta catálogo e pesquisa livros\nCria uma conta
+usuario --> sistema : Gerencia anúncios\nCompra, troca e solicita empréstimos\nAcompanha negociações e devoluções
+admin --> sistema : Analisa contestações\nRegistra decisões e consulta histórico
+sistema --> stripe : Cria pagamentos e cauções\nSolicita estornos
+stripe --> sistema : Envia confirmação de pagamento\npor webhook assinado
+
+legend right
+    |= Elemento |= Significado |
+    | <back:#E8F0FE>Usuário</back> | Pessoa que interage com a plataforma |
+    | <back:#DCFCE7>Sistema</back> | Produto sob desenvolvimento |
+    | <back:#FFF7ED>Sistema externo</back> | Serviço fora do controle da equipe |
+endlegend
+
+note bottom of sistema
+    Escopo: marketplace web para venda, troca e empréstimo de livros usados.
+    A entrega física ocorre fora do sistema; a aplicação registra os estados,
+    pagamentos, devoluções, danos, multas e decisões administrativas.
+end note
+
+@enduml
