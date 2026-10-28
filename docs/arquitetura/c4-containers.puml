@@ -1,6 +1,6 @@
 @startuml c4-containers
 
-title Brique Literário — C4: Diagrama de Containers
+title MeLivrei — C4: Diagrama de Containers
 
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
@@ -16,7 +16,7 @@ rectangle "Usuário" as user #E8F0FE
 rectangle "Administrador" as admin #E8F0FE
 rectangle "Stripe" as stripe #FFF7ED
 
-rectangle "Brique Literário" as system #F8FAFC {
+rectangle "MeLivrei" as system #F8FAFC {
     rectangle "Navegador web" as browser #E8F0FE
     rectangle "Frontend web\nNext.js + React + TypeScript\n\nCatálogo, autenticação, anúncios,\nnegociações, pagamentos e área administrativa." as frontend #DBEAFE
     rectangle "API REST\nNestJS + TypeScript\n\nAutenticação | Catálogo | Anúncios\nNegociações | Pagamentos | Empréstimos\nDisputas | Auditoria" as api #DCFCE7
