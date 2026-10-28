@@ -2,7 +2,7 @@
 
 - **Status:** Aceito
 - **Data:** 2026-10-28
-- **Decisores:** Grupo da A3
+- **Decisores:** Carlos Felipe Diedrich, Gabriel Baum, Gabriel Tonon, Guilherme Duarte, Meri Ane Bronzoni Paim e Yuri Echevarria
 
 ## Contexto
 
