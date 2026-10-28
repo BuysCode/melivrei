@@ -1,72 +1,67 @@
-@startuml c4-containers
+# ADR-001 — Arquitetura web separada e stack do Brique Literário
 
-title Brique Literário — C4: Diagrama de Containers
+- **Status:** Aceito
+- **Data:** 2026-10-28
+- **Decisores:** Grupo da A3
 
-skinparam backgroundColor #FFFFFF
-skinparam shadowing false
-skinparam defaultFontName Arial
-skinparam ArrowColor #475569
-skinparam rectangle {
-    BorderColor #334155
-    FontColor #0F172A
-    RoundCorner 12
-}
+## Contexto
 
-rectangle "Usuário" as user #E8F0FE
-rectangle "Administrador" as admin #E8F0FE
-rectangle "Stripe" as stripe #FFF7ED
+O Brique Literário será um marketplace web com cadastro de usuários, anúncios, busca, negociações de venda, troca e empréstimo, pagamentos por Stripe, caução, multas, contestações e análise administrativa.
 
-rectangle "Brique Literário" as system #F8FAFC {
-    rectangle "Navegador web" as browser #E8F0FE
-    rectangle "Frontend web\nNext.js + React + TypeScript\n\nCatálogo, autenticação, anúncios,\nnegociações, pagamentos e área administrativa." as frontend #DBEAFE
-    rectangle "API REST\nNestJS + TypeScript\n\nAutenticação | Catálogo | Anúncios\nNegociações | Pagamentos | Empréstimos\nDisputas | Auditoria" as api #DCFCE7
-    database "Banco de dados\nPostgreSQL\nacessado via Prisma" as db #F1F5F9
-end rectangle
+A solução precisa demonstrar orientação a objetos, separação de responsabilidades, testes, documentação de API, persistência relacional e execução com Docker Compose. O professor autorizou o uso de TypeScript, embora a orientação geral da atividade mencione Python ou Java.
 
-user --> browser : Usa
-admin --> browser : Usa
-browser --> frontend : HTTPS
-frontend --> api : REST/JSON\nHTTPS
-api --> db : Prisma/SQL
-api --> stripe : Stripe API\nPaymentIntents e estornos
-stripe --> api : Webhooks assinados
+## Decisão
 
-rectangle "Módulos principais da API" as modules #FFFFFF {
-    rectangle "Identity & Access\nUsuários, autenticação e papéis" as identity #F8FAFC
-    rectangle "Catalog\nLivros, anúncios e busca" as catalog #F8FAFC
-    rectangle "Negotiation\nVenda, troca e estados" as negotiation #F8FAFC
-    rectangle "Loan & Settlement\nEmpréstimos, caução, danos e atrasos" as loan #F8FAFC
-    rectangle "Payment\nStripe, webhooks e estornos" as payment #F8FAFC
-    rectangle "Dispute & Audit\nContestações e histórico" as dispute #F8FAFC
-}
+Adotaremos uma arquitetura web separada, organizada em frontend, backend e banco de dados:
 
-api ..> identity : contém
-api ..> catalog : contém
-api ..> negotiation : contém
-api ..> loan : contém
-api ..> payment : contém
-api ..> dispute : contém
+- **Frontend:** Next.js com React e TypeScript.
+- **Backend:** NestJS com TypeScript.
+- **Persistência:** PostgreSQL utilizando Prisma.
+- **Pagamentos:** Stripe em ambiente de testes/sandbox.
+- **Documentação:** Swagger/OpenAPI.
+- **Testes:** Jest, testes unitários e testes de integração dos fluxos principais.
+- **Execução:** Docker Compose.
 
-identity ..> db
-catalog ..> db
-negotiation ..> db
-loan ..> db
-payment ..> db
-dispute ..> db
-payment ..> stripe
+O frontend será responsável pela interface e pela comunicação com a API. O backend concentrará autenticação, permissões, regras de negócio, transições de estado, integração com Stripe e validação de webhooks. O PostgreSQL será a fonte persistente dos dados do domínio.
 
-legend right
-    |= Elemento |= Tecnologia / função |
-    | <back:#E8F0FE>Ator</back> | Pessoa que usa a solução |
-    | <back:#DBEAFE>Frontend</back> | Interface web executada no navegador |
-    | <back:#DCFCE7>API</back> | Backend responsável pelas regras de negócio |
-    | <back:#F1F5F9>Banco</back> | Persistência relacional |
-    | <back:#FFF7ED>Stripe</back> | Pagamentos e estornos externos |
-endlegend
+## Alternativas consideradas
 
-note bottom of api
-    A API é responsável por validar permissões, transições de estado,
-    confirmação de pagamentos via webhook e regras de caução.
-end note
+### Frontend e backend em uma única aplicação
 
-@enduml
+Simplificaria a configuração inicial, mas dificultaria a demonstração clara da separação de responsabilidades e a documentação de uma API independente.
+
+### Backend com Express sem NestJS
+
+Seria mais enxuto, mas exigiria maior definição manual de módulos, injeção de dependências, validação e organização estrutural.
+
+### Banco NoSQL
+
+Poderia facilitar alterações de estrutura, mas o domínio possui relações fortes entre usuários, anúncios, negociações, pagamentos, empréstimos e auditoria. PostgreSQL se adequa melhor à integridade referencial necessária.
+
+### Pagamento simulado internamente
+
+Reduziria a complexidade, mas não demonstraria adequadamente o requisito de confirmação de pagamento por um provedor externo. O Stripe em sandbox oferece um fluxo mais realista sem movimentar dinheiro real.
+
+## Consequências positivas
+
+- Separação clara entre interface, regras de negócio e persistência.
+- API documentável e testável de forma independente.
+- Boa representação de orientação a objetos por meio de entidades, serviços e casos de uso.
+- PostgreSQL fornece relacionamentos e integridade adequados ao domínio.
+- Stripe permite validar pagamentos por webhook, reduzindo dependência de comprovantes manuais.
+- Docker Compose facilita a execução padronizada pelo grupo e pela banca.
+
+## Consequências negativas e riscos
+
+- O grupo precisará configurar e integrar dois projetos de aplicação.
+- A integração Stripe exige tratamento de webhook, idempotência e variáveis de ambiente.
+- A arquitetura pode ficar grande para uma A3 se todos os fluxos forem implementados com a mesma profundidade.
+- A equipe precisa controlar o escopo para não transformar o projeto em uma plataforma comercial completa.
+
+## Medidas de controle
+
+- Implementar primeiro o fluxo vertical de compra e, depois, o fluxo de empréstimo.
+- Manter troca e administração com escopo mínimo e critérios claros.
+- Utilizar apenas credenciais de teste do Stripe.
+- Não armazenar dados completos de cartão.
+- Registrar decisões novas em ADRs adicionais quando alterarem a arquitetura ou o comportamento do domínio.
