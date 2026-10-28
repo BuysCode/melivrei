@@ -1,0 +1,72 @@
+@startuml c4-containers
+
+title Brique Literário — C4: Diagrama de Containers
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam rectangle {
+    BorderColor #334155
+    FontColor #0F172A
+    RoundCorner 12
+}
+
+rectangle "Usuário" as user #E8F0FE
+rectangle "Administrador" as admin #E8F0FE
+rectangle "Stripe" as stripe #FFF7ED
+
+rectangle "Brique Literário" as system #F8FAFC {
+    rectangle "Navegador web" as browser #E8F0FE
+    rectangle "Frontend web\nNext.js + React + TypeScript\n\nCatálogo, autenticação, anúncios,\nnegociações, pagamentos e área administrativa." as frontend #DBEAFE
+    rectangle "API REST\nNestJS + TypeScript\n\nAutenticação | Catálogo | Anúncios\nNegociações | Pagamentos | Empréstimos\nDisputas | Auditoria" as api #DCFCE7
+    database "Banco de dados\nPostgreSQL\nacessado via Prisma" as db #F1F5F9
+end rectangle
+
+user --> browser : Usa
+admin --> browser : Usa
+browser --> frontend : HTTPS
+frontend --> api : REST/JSON\nHTTPS
+api --> db : Prisma/SQL
+api --> stripe : Stripe API\nPaymentIntents e estornos
+stripe --> api : Webhooks assinados
+
+rectangle "Módulos principais da API" as modules #FFFFFF {
+    rectangle "Identity & Access\nUsuários, autenticação e papéis" as identity #F8FAFC
+    rectangle "Catalog\nLivros, anúncios e busca" as catalog #F8FAFC
+    rectangle "Negotiation\nVenda, troca e estados" as negotiation #F8FAFC
+    rectangle "Loan & Settlement\nEmpréstimos, caução, danos e atrasos" as loan #F8FAFC
+    rectangle "Payment\nStripe, webhooks e estornos" as payment #F8FAFC
+    rectangle "Dispute & Audit\nContestações e histórico" as dispute #F8FAFC
+}
+
+api ..> identity : contém
+api ..> catalog : contém
+api ..> negotiation : contém
+api ..> loan : contém
+api ..> payment : contém
+api ..> dispute : contém
+
+identity ..> db
+catalog ..> db
+negotiation ..> db
+loan ..> db
+payment ..> db
+dispute ..> db
+payment ..> stripe
+
+legend right
+    |= Elemento |= Tecnologia / função |
+    | <back:#E8F0FE>Ator</back> | Pessoa que usa a solução |
+    | <back:#DBEAFE>Frontend</back> | Interface web executada no navegador |
+    | <back:#DCFCE7>API</back> | Backend responsável pelas regras de negócio |
+    | <back:#F1F5F9>Banco</back> | Persistência relacional |
+    | <back:#FFF7ED>Stripe</back> | Pagamentos e estornos externos |
+endlegend
+
+note bottom of api
+    A API é responsável por validar permissões, transições de estado,
+    confirmação de pagamentos via webhook e regras de caução.
+end note
+
+@enduml
