@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+enum ListingMode {
+  SALE
+  TRADE
+}
+enum ListingStatus {
+  AVAILABLE
+  RESERVED
+  IN_NEGOTIATION
+  UNAVAILABLE
+  COMPLETED
+  CANCELLED
+}
+enum BookCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  DAMAGED
+}
+enum NegotiationType {
+  SALE
+  TRADE
+}
+enum NegotiationStatus {
+  PENDING
+  PENDING_PAYMENT
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+enum TradeOfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REFUSED
+  EXPIRED
+  REFUNDED
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         UserRole      @default(USER)
+  status       UserStatus    @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  listings     Listing[]
+  participations NegotiationParticipant[]
+  auditEvents  AuditEvent[]  @relation("ActorAuditEvents")
+}
+
+model Book {
+  id        String    @id @default(uuid())
+  title     String
+  author    String
+  isbn      String?
+  genre     String?
+  createdAt DateTime  @default(now())
+  listings  Listing[]
+}
+
+model Listing {
+  id          String        @id @default(uuid())
+  ownerId     String
+  bookId      String
+  description String
+  condition   BookCondition
+  mode        ListingMode
+  price       Decimal?
+  status      ListingStatus @default(AVAILABLE)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  owner       User          @relation(fields: [ownerId], references: [id])
+  book        Book          @relation(fields: [bookId], references: [id])
+  images      ListingImage[]
+  negotiations Negotiation[] @relation("RequestedListing")
+  offeredIn   TradeOffer[]  @relation("OfferedListing")
+}
+
+model ListingImage {
+  id        String  @id @default(uuid())
+  listingId String
+  url       String
+  altText   String?
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Negotiation {
+  id                String            @id @default(uuid())
+  listingId         String
+  type              NegotiationType
+  status            NegotiationStatus @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  listing           Listing           @relation("RequestedListing", fields: [listingId], references: [id])
+  participants      NegotiationParticipant[]
+  tradeOffer        TradeOffer?
+  payment           Payment?
+  auditEvents       AuditEvent[]
+}
+
+model NegotiationParticipant {
+  negotiationId String
+  userId        String
+  negotiation   Negotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id])
+  @@id([negotiationId, userId])
+}
+
+model TradeOffer {
+  id              String           @id @default(uuid())
+  negotiationId   String           @unique
+  offeredListingId String
+  message         String?
+  status          TradeOfferStatus @default(PENDING)
+  negotiation     Negotiation      @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  offeredListing  Listing          @relation("OfferedListing", fields: [offeredListingId], references: [id])
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  negotiationId     String        @unique
+  providerPaymentId String        @unique
+  amount            Decimal
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  negotiation       Negotiation   @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  events            PaymentEvent[]
+}
+
+model PaymentEvent {
+  id              String   @id @default(uuid())
+  paymentId       String
+  providerEventId String   @unique
+  eventType       String
+  payloadHash     String
+  receivedAt      DateTime @default(now())
+  processedAt     DateTime?
+  payment         Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model AuditEvent {
+  id            String       @id @default(uuid())
+  actorId       String?
+  negotiationId String?
+  action        String
+  entityType    String
+  entityId      String
+  metadata      Json?
+  createdAt     DateTime     @default(now())
+  actor         User?        @relation("ActorAuditEvents", fields: [actorId], references: [id])
+  negotiation   Negotiation? @relation(fields: [negotiationId], references: [id])
+}

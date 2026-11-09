@@ -13,17 +13,15 @@ skinparam rectangle {
 }
 
 rectangle "Visitante" as visitante #E8F0FE
-rectangle "Usuário autenticado\n(comprador, anunciante, interessado ou proprietário)" as usuario #E8F0FE
-rectangle "Administrador" as admin #E8F0FE
+rectangle "Usuário autenticado\n(comprador, vendedor, anunciante ou interessado)" as usuario #E8F0FE
 
-rectangle "MeLivrei\nMarketplace web de livros usados\n\nPermite publicar anúncios, pesquisar livros,\nnegociar vendas, trocas e empréstimos,\ncontrolar pagamentos, cauções e conflitos." as sistema #DCFCE7
+rectangle "MeLivrei\nMarketplace web de livros usados\n\nPermite publicar anúncios, pesquisar livros,\nnegociar vendas e trocas,\ncontrolar pagamentos e histórico." as sistema #DCFCE7
 
 rectangle "Stripe\nGateway externo de pagamentos" as stripe #FFF7ED
 
 visitante --> sistema : Consulta catálogo e pesquisa livros\nCria uma conta
-usuario --> sistema : Gerencia anúncios\nCompra, troca e solicita empréstimos\nAcompanha negociações e devoluções
-admin --> sistema : Analisa contestações\nRegistra decisões e consulta histórico
-sistema --> stripe : Cria pagamentos e cauções\nSolicita estornos
+usuario --> sistema : Gerencia anúncios\nCompra, vende e propõe trocas\nAcompanha negociações
+sistema --> stripe : Cria pagamentos de vendas\nSolicita estornos
 stripe --> sistema : Envia confirmação de pagamento\npor webhook assinado
 
 legend right
@@ -34,9 +32,9 @@ legend right
 endlegend
 
 note bottom of sistema
-    Escopo: marketplace web para venda, troca e empréstimo de livros usados.
+    Escopo: marketplace web para venda e troca de livros usados.
     A entrega física ocorre fora do sistema; a aplicação registra os estados,
-    pagamentos, devoluções, danos, multas e decisões administrativas.
+    pagamentos e histórico das negociações.
 end note
 
 @enduml

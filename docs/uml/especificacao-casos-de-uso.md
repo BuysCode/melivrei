@@ -1,12 +1,12 @@
 # Especificação dos casos de uso principais
 
-Este documento detalha os cinco casos de uso centrais do MeLivrei. Os identificadores devem permanecer alinhados ao diagrama em `casos-de-uso.mmd` e à matriz de rastreabilidade do PRD.
+Este documento detalha os casos de uso centrais do MeLivrei. Os identificadores permanecem alinhados ao diagrama em `casos-de-uso.md` e à matriz de rastreabilidade do PRD.
 
 ## UC-03 — Gerenciar anúncio
 
 **Atores:** Anunciante.
 
-**Objetivo:** publicar, consultar, editar ou remover um anúncio de livro.
+**Objetivo:** publicar, consultar, editar ou remover um anúncio de livro para venda ou troca.
 
 **Pré-condições:** o anunciante está autenticado.
 
@@ -64,103 +64,34 @@ Este documento detalha os cinco casos de uso centrais do MeLivrei. Os identifica
 
 **Pós-condições:** em caso de sucesso, a venda é registrada e o anúncio fica reservado ou concluído; em caso de falha, o anúncio volta a ficar disponível.
 
-**Requisitos relacionados:** `RF-007`, `RF-010`, `RF-011`, `RNF-006`, `RNF-007`.
+**Requisitos relacionados:** `RF-007`, `RF-009`, `RF-010`, `RNF-006`, `RNF-007`.
 
 **Critérios relacionados:** `AC-012` a `AC-015`.
 
-## UC-08 — Solicitar empréstimo
+## UC-07 — Propor troca
 
-**Atores:** Interessado, Proprietário e Stripe.
+**Atores:** Interessado e Anunciante.
 
-**Objetivo:** criar um empréstimo com prazo e caução confirmada.
+**Objetivo:** propor um livro próprio em troca de outro anúncio disponível.
 
-**Pré-condições:** o interessado está autenticado; o anúncio pertence a outro usuário; o anúncio está disponível; a modalidade é empréstimo; prazo e caução são válidos.
-
-**Fluxo principal:**
-
-1. O interessado seleciona o anúncio e consulta prazo, caução e condições.
-2. O interessado confirma a solicitação.
-3. O sistema cria a negociação com status `PENDING_DEPOSIT`.
-4. O sistema cria a cobrança da caução no Stripe.
-5. O interessado conclui o pagamento.
-6. O Stripe envia a confirmação ao backend.
-7. O sistema valida o evento e atualiza a caução para `HELD`.
-8. O proprietário registra a entrega do livro.
-9. O sistema atualiza o empréstimo para `ACTIVE`.
-
-**Fluxos alternativos:**
-
-- Se o prazo ou a caução forem inválidos, o sistema impede a solicitação.
-- Se o pagamento for recusado ou expirar, a negociação é encerrada e o anúncio é liberado.
-- Se a caução não for confirmada, o proprietário não pode registrar a entrega.
-- Se o interessado tentar solicitar o próprio livro, o sistema bloqueia a operação.
-
-**Pós-condições:** o empréstimo fica ativo após a confirmação da caução e o registro da entrega.
-
-**Requisitos relacionados:** `RF-009`, `RF-010`, `RF-011`, `RNF-006`, `RNF-007`.
-
-**Critérios relacionados:** `AC-019` a `AC-022`.
-
-## UC-11 — Registrar entrega e devolução
-
-**Atores:** Proprietário.
-
-**Objetivo:** registrar a entrega do livro e controlar sua devolução ao final do empréstimo.
-
-**Pré-condições:** para registrar entrega, a caução foi confirmada; para registrar devolução, o empréstimo está ativo.
-
-**Fluxo principal — devolução:**
-
-1. O proprietário acessa o empréstimo ativo.
-2. O proprietário informa a data de devolução e a condição observada.
-3. O sistema verifica o prazo contratado.
-4. O sistema identifica danos selecionados e calcula eventual atraso.
-5. O sistema calcula a liquidação da caução.
-6. O sistema altera o empréstimo para `RETURNED` ou `UNDER_REVIEW`.
-7. O sistema registra o evento no histórico.
-
-**Fluxos alternativos:**
-
-- Se o empréstimo não estiver ativo, o sistema bloqueia o registro da devolução.
-- Se a devolução estiver dentro do prazo e sem danos, a caução é liberada integralmente.
-- Se houver dano, o sistema aplica os valores da tabela de danos.
-- Se houver atraso, o sistema calcula o valor adicional conforme a regra vigente.
-- Se o participante contestar a cobrança, o caso passa para `UNDER_REVIEW`.
-
-**Pós-condições:** a devolução, os danos, o atraso e a decisão sobre a caução ficam registrados.
-
-**Requisitos relacionados:** `RF-011`, `RF-012`, `RF-013`, `RF-014`, `RF-015`, `RF-018`.
-
-**Critérios relacionados:** `AC-023` a `AC-028`.
-
-## UC-16 — Analisar conflito
-
-**Atores:** Administrador.
-
-**Objetivo:** analisar uma contestação sobre dano, atraso ou retenção de caução e registrar uma decisão.
-
-**Pré-condições:** o administrador está autenticado; existe uma contestação pendente.
+**Pré-condições:** os dois anúncios pertencem a usuários distintos e estão disponíveis; a modalidade do anúncio solicitado é troca.
 
 **Fluxo principal:**
 
-1. O administrador consulta a lista de contestações pendentes.
-2. O administrador acessa o histórico do empréstimo, da devolução e do pagamento.
-3. O administrador analisa a justificativa e as evidências registradas.
-4. O administrador escolhe aprovar, alterar ou rejeitar a retenção.
-5. O administrador informa uma justificativa obrigatória.
-6. O sistema registra a decisão e atualiza o valor final da caução.
-7. O sistema altera a contestação para `RESOLVED`.
-8. O sistema registra a decisão no histórico.
+1. O interessado seleciona o anúncio e informa o livro que oferecerá.
+2. O sistema verifica a disponibilidade dos dois anúncios e registra a proposta.
+3. O proprietário do anúncio solicitado aceita ou recusa a proposta.
+4. Em caso de aceite, o sistema reserva os dois anúncios.
+5. Após a confirmação das partes, o sistema conclui a troca e torna os anúncios indisponíveis.
 
 **Fluxos alternativos:**
 
-- Se o usuário comum tentar acessar a função, o sistema bloqueia a operação.
-- Se a contestação não possuir informações suficientes, o administrador pode solicitar complementação e mantê-la pendente.
-- Se o administrador cancelar a análise sem decisão, o caso permanece pendente.
+- Se algum anúncio estiver indisponível, o sistema não cria a proposta.
+- Se o interessado oferecer o próprio anúncio solicitado, o sistema bloqueia a operação.
+- Se o proprietário recusar ou qualquer participante cancelar antes da conclusão, o sistema encerra a negociação e libera os anúncios conforme a regra definida.
 
-**Pós-condições:** a decisão administrativa fica registrada, auditável e vinculada à contestação.
+**Pós-condições:** a troca é concluída ou encerrada, com o estado e o histórico da negociação atualizados.
 
-**Requisitos relacionados:** `RF-016`, `RF-017`, `RF-018`, `RNF-005`, `RNF-011`.
+**Requisitos relacionados:** `RF-008`, `RF-010`, `RF-011`.
 
-**Critérios relacionados:** `AC-029` a `AC-033`.
-
+**Critérios relacionados:** `AC-016` a `AC-018`.

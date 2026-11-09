@@ -1,4 +1,4 @@
-# ADR-001 — Arquitetura web separada e stack do Brique Literário
+# ADR-001 — Arquitetura web separada e stack do MeLivrei
 
 - **Status:** Aceito
 - **Data:** 2026-10-28
@@ -6,7 +6,7 @@
 
 ## Contexto
 
-O Brique Literário será um marketplace web com cadastro de usuários, anúncios, busca, negociações de venda, troca e empréstimo, pagamentos por Stripe, caução, multas, contestações e análise administrativa.
+O MeLivrei será um marketplace web com cadastro de usuários, anúncios, busca, negociações de venda e troca, pagamentos por Stripe e histórico das negociações.
 
 A solução precisa demonstrar orientação a objetos, separação de responsabilidades, testes, documentação de API, persistência relacional e execução com Docker Compose. O professor autorizou o uso de TypeScript, embora a orientação geral da atividade mencione Python ou Java.
 
@@ -36,7 +36,7 @@ Seria mais enxuto, mas exigiria maior definição manual de módulos, injeção 
 
 ### Banco NoSQL
 
-Poderia facilitar alterações de estrutura, mas o domínio possui relações fortes entre usuários, anúncios, negociações, pagamentos, empréstimos e auditoria. PostgreSQL se adequa melhor à integridade referencial necessária.
+Poderia facilitar alterações de estrutura, mas o domínio possui relações fortes entre usuários, anúncios, negociações, pagamentos e auditoria. PostgreSQL se adequa melhor à integridade referencial necessária.
 
 ### Pagamento simulado internamente
 
@@ -60,8 +60,8 @@ Reduziria a complexidade, mas não demonstraria adequadamente o requisito de con
 
 ## Medidas de controle
 
-- Implementar primeiro o fluxo vertical de compra e, depois, o fluxo de empréstimo.
-- Manter troca e administração com escopo mínimo e critérios claros.
+- Implementar primeiro o fluxo vertical de compra e, depois, o fluxo de troca.
+- Manter o escopo de troca com critérios claros.
 - Utilizar apenas credenciais de teste do Stripe.
 - Não armazenar dados completos de cartão.
 - Registrar decisões novas em ADRs adicionais quando alterarem a arquitetura ou o comportamento do domínio.
