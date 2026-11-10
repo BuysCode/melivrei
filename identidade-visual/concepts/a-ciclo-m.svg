@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">MeLivrei — conceito Ciclo M</title>
+  <!-- Grid: 16 units. One 28-unit continuous line; endpoints resolve into an M and a circular exchange. -->
+  <path d="M48 184V83c0-14 17-21 27-11l53 53 53-53c10-10 27-3 27 11v60"
+        fill="none" stroke="#111111" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M208 143c0 36-29 65-65 65-18 0-35-8-47-21"
+        fill="none" stroke="#111111" stroke-width="28" stroke-linecap="round"/>
+</svg>

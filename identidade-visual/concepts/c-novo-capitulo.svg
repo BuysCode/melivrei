@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">MeLivrei — conceito Novo capítulo</title>
+  <!-- A 24-unit frame intentionally opens at the top-right; the bookmark points toward the next owner. -->
+  <path fill="#111111" d="M40 40h120v28H68v120h120v-92h28v106c0 8-6 14-14 14H54c-8 0-14-6-14-14V54c0-8 6-14 14-14Z"/>
+  <path fill="#111111" d="M143 28h61c8 0 14 6 14 14v61c0 13-16 19-25 10l-19-19-45 45-20-20 45-45-19-19c-9-9-3-25 10-25Z"/>
+</svg>

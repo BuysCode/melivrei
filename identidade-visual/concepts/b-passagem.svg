@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title">
+  <title id="title">MeLivrei — conceito Passagem</title>
+  <!-- Two mirrored page-forms on an 8-unit grid. The central void is a doorway / shared path. -->
+  <path fill="#111111" d="M32 61c0-12 13-19 23-13l64 37c6 4 9 10 9 18v105c0 12-12 19-22 13l-64-37c-6-4-10-10-10-18V61Zm192 0c0-12-13-19-23-13l-64 37c-6 4-9 10-9 18v105c0 12 12 19 22 13l64-37c6-4 10-10 10-18V61Z"/>
+</svg>

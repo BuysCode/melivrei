@@ -1,0 +1,27 @@
+{
+  "brand": "MeLivrei",
+  "tagline": "Uma história encontra a próxima",
+  "brief": "Marketplace web de livros usados para compra, venda e troca entre leitores. A identidade deve ser acolhedora, confiável e contemporânea.",
+  "adjectives": ["acolhedora", "confiável", "circular", "editorial"],
+  "criteria": "Símbolo legível em 16 px, marca reconhecível em uma cor e adequada a catálogo, favicon e avatar.",
+  "industry": "ecommerce-retail",
+  "nav": ["Explorar livros", "Como funciona", "Anunciar"],
+  "brand_color": "#173D38",
+  "greyscale": false,
+  "final": true,
+  "designer": "MeLivrei",
+  "round": 2,
+  "concepts": [{
+    "name": "Ciclo M",
+    "symbol": "melivrei-symbol.svg",
+    "lockup": "melivrei-horizontal.svg",
+    "stacked": "melivrei-stacked.svg",
+    "symbol_on_tile": "melivrei-symbol-white.svg",
+    "symbol_on_dark": "melivrei-symbol-white.svg",
+    "lockup_on_dark": "melivrei-horizontal-white.svg",
+    "idea": "Um M em percurso contínuo representa o livro que passa adiante e ganha novo ciclo.",
+    "rationale": ["O monograma é reconhecível como MeLivrei", "O percurso sugere troca sem ilustrar um livro literalmente", "Funciona em uma cor e em tamanhos pequenos"]
+  }],
+  "recommendation": "Ciclo M, direção escolhida para a identidade MeLivrei.",
+  "next_steps": ["Aplicar no cabeçalho do produto", "Validar contraste nos componentes", "Realizar busca de anterioridade antes do registro"]
+}

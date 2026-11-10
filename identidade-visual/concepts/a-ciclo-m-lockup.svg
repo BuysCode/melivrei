@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 256" width="760" height="256" role="img" aria-labelledby="title">
+  <title id="title">MeLivrei — Ciclo M</title>
+  <g transform="translate(0 0) scale(1)"><path d="M48 184V83c0-14 17-21 27-11l53 53 53-53c10-10 27-3 27 11v60" fill="none" stroke="#111111" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><path d="M208 143c0 36-29 65-65 65-18 0-35-8-47-21" fill="none" stroke="#111111" stroke-width="28" stroke-linecap="round"/></g>
+  <text x="292" y="155" fill="#111111" font-family="Arial, Helvetica, sans-serif" font-size="80" font-weight="700" letter-spacing="-4">MeLivrei</text>
+</svg>
