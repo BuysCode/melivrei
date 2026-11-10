@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,15 +12,18 @@ enum UserRole {
   USER
   ADMIN
 }
+
 enum UserStatus {
   ACTIVE
   SUSPENDED
   INACTIVE
 }
+
 enum ListingMode {
   SALE
   TRADE
 }
+
 enum ListingStatus {
   AVAILABLE
   RESERVED
@@ -28,6 +32,7 @@ enum ListingStatus {
   COMPLETED
   CANCELLED
 }
+
 enum BookCondition {
   NEW
   LIKE_NEW
@@ -35,10 +40,12 @@ enum BookCondition {
   FAIR
   DAMAGED
 }
+
 enum NegotiationType {
   SALE
   TRADE
 }
+
 enum NegotiationStatus {
   PENDING
   PENDING_PAYMENT
@@ -47,12 +54,14 @@ enum NegotiationStatus {
   CANCELLED
   COMPLETED
 }
+
 enum TradeOfferStatus {
   PENDING
   ACCEPTED
   REJECTED
   CANCELLED
 }
+
 enum PaymentStatus {
   PENDING
   APPROVED
@@ -62,16 +71,22 @@ enum PaymentStatus {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  name         String
-  email        String        @unique
-  passwordHash String
-  role         UserRole      @default(USER)
-  status       UserStatus    @default(ACTIVE)
-  createdAt    DateTime      @default(now())
-  listings     Listing[]
+  id             String                   @id @default(uuid())
+  name           String
+  email          String                   @unique
+  emailVerified  Boolean                  @default(false)
+  image          String?
+  role           UserRole                 @default(USER)
+  status         UserStatus               @default(ACTIVE)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  accounts       Account[]
+  sessions       Session[]
+  listings       Listing[]
   participations NegotiationParticipant[]
-  auditEvents  AuditEvent[]  @relation("ActorAuditEvents")
+  auditEvents    AuditEvent[]             @relation("ActorAuditEvents")
+
+  @@map("User")
 }
 
 model Book {
@@ -85,21 +100,21 @@ model Book {
 }
 
 model Listing {
-  id          String        @id @default(uuid())
-  ownerId     String
-  bookId      String
-  description String
-  condition   BookCondition
-  mode        ListingMode
-  price       Decimal?
-  status      ListingStatus @default(AVAILABLE)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  owner       User          @relation(fields: [ownerId], references: [id])
-  book        Book          @relation(fields: [bookId], references: [id])
-  images      ListingImage[]
-  negotiations Negotiation[] @relation("RequestedListing")
-  offeredIn   TradeOffer[]  @relation("OfferedListing")
+  id           String         @id @default(uuid())
+  ownerId      String
+  bookId       String
+  description  String
+  condition    BookCondition
+  mode         ListingMode
+  price        Decimal?
+  status       ListingStatus  @default(AVAILABLE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  owner        User           @relation(fields: [ownerId], references: [id])
+  book         Book           @relation(fields: [bookId], references: [id])
+  images       ListingImage[]
+  negotiations Negotiation[]  @relation("RequestedListing")
+  offeredIn    TradeOffer[]   @relation("OfferedListing")
 }
 
 model ListingImage {
@@ -111,17 +126,17 @@ model ListingImage {
 }
 
 model Negotiation {
-  id                String            @id @default(uuid())
-  listingId         String
-  type              NegotiationType
-  status            NegotiationStatus @default(PENDING)
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  listing           Listing           @relation("RequestedListing", fields: [listingId], references: [id])
-  participants      NegotiationParticipant[]
-  tradeOffer        TradeOffer?
-  payment           Payment?
-  auditEvents       AuditEvent[]
+  id           String                   @id @default(uuid())
+  listingId    String
+  type         NegotiationType
+  status       NegotiationStatus        @default(PENDING)
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+  listing      Listing                  @relation("RequestedListing", fields: [listingId], references: [id])
+  participants NegotiationParticipant[]
+  tradeOffer   TradeOffer?
+  payment      Payment?
+  auditEvents  AuditEvent[]
 }
 
 model NegotiationParticipant {
@@ -129,39 +144,40 @@ model NegotiationParticipant {
   userId        String
   negotiation   Negotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
   user          User        @relation(fields: [userId], references: [id])
+
   @@id([negotiationId, userId])
 }
 
 model TradeOffer {
-  id              String           @id @default(uuid())
-  negotiationId   String           @unique
+  id               String           @id @default(uuid())
+  negotiationId    String           @unique
   offeredListingId String
-  message         String?
-  status          TradeOfferStatus @default(PENDING)
-  negotiation     Negotiation      @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
-  offeredListing  Listing          @relation("OfferedListing", fields: [offeredListingId], references: [id])
+  message          String?
+  status           TradeOfferStatus @default(PENDING)
+  negotiation      Negotiation      @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  offeredListing   Listing          @relation("OfferedListing", fields: [offeredListingId], references: [id])
 }
 
 model Payment {
-  id                String        @id @default(uuid())
-  negotiationId     String        @unique
-  providerPaymentId String        @unique
+  id                String         @id @default(uuid())
+  negotiationId     String         @unique
+  providerPaymentId String         @unique
   amount            Decimal
-  status            PaymentStatus @default(PENDING)
-  createdAt         DateTime      @default(now())
-  negotiation       Negotiation   @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  status            PaymentStatus  @default(PENDING)
+  createdAt         DateTime       @default(now())
+  negotiation       Negotiation    @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
   events            PaymentEvent[]
 }
 
 model PaymentEvent {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   paymentId       String
-  providerEventId String   @unique
+  providerEventId String    @unique
   eventType       String
   payloadHash     String
-  receivedAt      DateTime @default(now())
+  receivedAt      DateTime  @default(now())
   processedAt     DateTime?
-  payment         Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  payment         Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 }
 
 model AuditEvent {
@@ -175,4 +191,52 @@ model AuditEvent {
   createdAt     DateTime     @default(now())
   actor         User?        @relation("ActorAuditEvents", fields: [actorId], references: [id])
   negotiation   Negotiation? @relation(fields: [negotiationId], references: [id])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
 }

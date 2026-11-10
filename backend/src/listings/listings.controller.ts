@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
+  ApiCookieAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
@@ -17,7 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/current-user.decorator.js';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { BetterAuthGuard } from '../auth/better-auth.guard.js';
 import { CreateListingDto } from './dto/create-listing.dto.js';
 import { ListListingsDto } from './dto/list-listings.dto.js';
 import { ListingsService } from './listings.service.js';
@@ -38,8 +38,8 @@ export class ListingsController {
     return this.listings.findOne(id);
   }
   @Post()
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @UseGuards(BetterAuthGuard)
+  @ApiCookieAuth()
   @ApiOperation({ summary: 'Publicar anúncio' })
   @ApiCreatedResponse({ description: 'Anúncio publicado.' })
   create(
@@ -49,8 +49,8 @@ export class ListingsController {
     return this.listings.create(user.id, dto);
   }
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @UseGuards(BetterAuthGuard)
+  @ApiCookieAuth()
   @ApiOperation({ summary: 'Cancelar anúncio próprio' })
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.listings.remove(id, user.id);

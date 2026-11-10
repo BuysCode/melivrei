@@ -7,18 +7,18 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/current-user.decorator.js';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { BetterAuthGuard } from '../auth/better-auth.guard.js';
 import {
   CreatePurchaseDto,
   CreateTradeDto,
 } from './dto/create-negotiation.dto.js';
 import { NegotiationsService } from './negotiations.service.js';
 @ApiTags('Negociações')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@ApiCookieAuth()
+@UseGuards(BetterAuthGuard)
 @Controller('negotiations')
 export class NegotiationsController {
   constructor(private readonly negotiations: NegotiationsService) {}
