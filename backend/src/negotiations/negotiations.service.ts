@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import {
   ListingMode,
   ListingStatus,
@@ -12,6 +11,7 @@ import {
   NegotiationType,
 } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service.js';
+import { PaymentsService } from '../payments/payments.service.js';
 import {
   CreatePurchaseDto,
   CreateTradeDto,
@@ -19,7 +19,10 @@ import {
 
 @Injectable()
 export class NegotiationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly payments: PaymentsService,
+  ) {}
   async purchase(buyerId: string, dto: CreatePurchaseDto) {
     const listing = await this.availableListing(
       dto.listingId,
@@ -45,12 +48,6 @@ export class NegotiationsService {
           participants: {
             create: [{ userId: buyerId }, { userId: listing.ownerId }],
           },
-          payment: {
-            create: {
-              amount: listing.price!,
-              providerPaymentId: `sandbox_${randomUUID()}`,
-            },
-          },
           auditEvents: {
             create: {
               actorId: buyerId,
@@ -60,10 +57,10 @@ export class NegotiationsService {
             },
           },
         },
-        include: { payment: true },
       });
     });
-    return negotiation;
+    const payment = await this.payments.createForNegotiation(negotiation.id);
+    return { ...negotiation, payment };
   }
   async trade(requesterId: string, dto: CreateTradeDto) {
     if (dto.listingId === dto.offeredListingId)

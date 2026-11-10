@@ -4,7 +4,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Preserve the unparsed body so Stripe's webhook signature can be verified.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
