@@ -10,7 +10,7 @@ import {
   ListingStatus,
   NegotiationStatus,
   PaymentStatus,
-} from '@prisma/client';
+} from '../generated/prisma/client.js';
 import { PrismaService } from '../database/prisma.service.js';
 
 @Injectable()

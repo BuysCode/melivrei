@@ -9,7 +9,7 @@ import {
   ListingStatus,
   NegotiationStatus,
   NegotiationType,
-} from '@prisma/client';
+} from '../generated/prisma/client.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { PaymentsService } from '../payments/payments.service.js';
 import {

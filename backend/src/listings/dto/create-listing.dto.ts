@@ -1,4 +1,4 @@
-import { BookCondition, ListingMode } from '@prisma/client';
+import { BookCondition, ListingMode } from '../../generated/prisma/client.js';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,

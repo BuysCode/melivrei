@@ -1,4 +1,4 @@
-import { ListingMode } from '@prisma/client';
+import { ListingMode } from '../../generated/prisma/client.js';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 

@@ -1,16 +1,20 @@
 import { prismaAdapter } from '@better-auth/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
 import { betterAuth } from 'better-auth';
 import * as bcrypt from 'bcrypt';
+import { PrismaClient } from './generated/prisma/client.js';
+import { createPrismaAdapter } from './database/prisma-adapter.js';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 export const auth = betterAuth({
   appName: 'MeLivrei',
   baseURL: process.env.BETTER_AUTH_URL,
   basePath: '/api/auth',
   trustedOrigins: [process.env.FRONTEND_URL ?? 'http://localhost:3001'],
-  database: prismaAdapter(prisma, { provider: 'postgresql', transaction: true }),
+  database: prismaAdapter(prisma, {
+    provider: 'postgresql',
+    transaction: true,
+  }),
   emailAndPassword: {
     enabled: true,
     password: {
