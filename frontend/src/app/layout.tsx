@@ -20,7 +20,10 @@ export const metadata: Metadata = {
   },
   description:
     "Encontre, venda e troque livros usados diretamente com outros leitores.",
-  icons: { icon: "/favicon.ico" },
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default function RootLayout({
