@@ -1,69 +1,127 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ListingCard } from "@/components/listing-card";
+import { getListings, type Listing } from "@/lib/api";
 
-export default function Home() {
+export default async function Home() {
+  let listings: Listing[] | null = null;
+  try {
+    listings = (await getListings()).slice(0, 4);
+  } catch {
+    /* The catalog presents a recovery state below. */
+  }
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <section className="hero">
+        <div className="shell hero-grid">
+          <div className="hero-copy">
+            <h1>
+              Um livro que sai da sua estante pode começar outra história.
+            </h1>
+            <p>
+              Encontre livros usados, venda os que já leu e proponha trocas
+              diretamente a outros leitores.
+            </p>
+            <div className="hero-actions">
+              <Link className="button" href="/livros">
+                Explorar livros <span aria-hidden="true">→</span>
+              </Link>
+              <Link className="quiet-link" href="/anunciar">
+                Anunciar um livro
+              </Link>
+            </div>
+          </div>
+          <div className="hero-art" aria-hidden="true">
+            <div className="art-book art-book-one">
+              <span>
+                novas
+                <br />
+                leituras
+              </span>
+            </div>
+            <div className="art-book art-book-two">
+              <span>
+                outras
+                <br />
+                histórias
+              </span>
+            </div>
+            <div className="art-book art-book-three">
+              <span>
+                mais
+                <br />
+                caminhos
+              </span>
+            </div>
+            <div className="art-caption">
+              Uma estante. Muitas possibilidades.
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+      <section className="section shell" aria-labelledby="recentes">
+        <div className="section-heading">
+          <div>
+            <h2 id="recentes">Recém-chegados</h2>
+            <p>Livros que estão prontos para uma nova leitura.</p>
+          </div>
+          <Link className="quiet-link" href="/livros">
+            Ver todo o catálogo <span aria-hidden="true">→</span>
+          </Link>
         </div>
-      </main>
-    </div>
+        {listings === null ? (
+          <div className="state-panel">
+            <h3>Não foi possível carregar os livros agora.</h3>
+            <p>Confira se a API está em execução e tente novamente.</p>
+            <Link className="text-link" href="/livros">
+              Tentar no catálogo
+            </Link>
+          </div>
+        ) : listings.length ? (
+          <div className="listing-grid">
+            {listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        ) : (
+          <div className="state-panel">
+            <h3>A estante está esperando o primeiro livro.</h3>
+            <p>Quando alguém publicar um anúncio, ele aparecerá aqui.</p>
+            <Link className="text-link" href="/anunciar">
+              Anunciar um livro
+            </Link>
+          </div>
+        )}
+      </section>
+      <section className="section section-how">
+        <div className="shell how-grid">
+          <div>
+            <h2>Para ler mais, o livro precisa circular.</h2>
+            <p>
+              Você escolhe como: encontre uma edição usada, anuncie um livro ou
+              ofereça uma troca.
+            </p>
+          </div>
+          <div className="how-list">
+            <div>
+              <span>Encontre</span>
+              <p>
+                Pesquise por título ou autor e veja os detalhes de cada anúncio.
+              </p>
+            </div>
+            <div>
+              <span>Converse</span>
+              <p>Inicie uma compra ou proponha um livro seu para troca.</p>
+            </div>
+            <div>
+              <span>Combine</span>
+              <p>
+                A entrega do livro é acertada diretamente entre as pessoas
+                envolvidas.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
