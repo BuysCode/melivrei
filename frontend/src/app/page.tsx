@@ -1,14 +1,7 @@
 import Link from "next/link";
-import { ListingCard } from "@/components/listing-card";
-import { getListings, type Listing } from "@/lib/api";
+import { RecentListings } from "@/components/demo-listings";
 
-export default async function Home() {
-  let listings: Listing[] | null = null;
-  try {
-    listings = (await getListings()).slice(0, 4);
-  } catch {
-    /* The catalog presents a recovery state below. */
-  }
+export default function Home() {
   return (
     <>
       <section className="hero">
@@ -68,29 +61,7 @@ export default async function Home() {
             Ver todo o catálogo <span aria-hidden="true">→</span>
           </Link>
         </div>
-        {listings === null ? (
-          <div className="state-panel">
-            <h3>Não foi possível carregar os livros agora.</h3>
-            <p>Confira se a API está em execução e tente novamente.</p>
-            <Link className="text-link" href="/livros">
-              Tentar no catálogo
-            </Link>
-          </div>
-        ) : listings.length ? (
-          <div className="listing-grid">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
-        ) : (
-          <div className="state-panel">
-            <h3>A estante está esperando o primeiro livro.</h3>
-            <p>Quando alguém publicar um anúncio, ele aparecerá aqui.</p>
-            <Link className="text-link" href="/anunciar">
-              Anunciar um livro
-            </Link>
-          </div>
-        )}
+        <RecentListings />
       </section>
       <section className="section section-how">
         <div className="shell how-grid">

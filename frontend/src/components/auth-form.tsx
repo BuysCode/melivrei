@@ -3,50 +3,39 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import {
+  registerUser,
+  signIn,
+  switchUser,
+  useDemoStore,
+} from "@/lib/demo-store";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { users } = useDemoStore();
   const [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
   const destination = searchParams.get("voltar");
   const next =
     destination?.startsWith("/") && !destination.startsWith("//")
       ? destination
-      : "/livros";
-  async function submit(event: FormEvent<HTMLFormElement>) {
+      : "/minha-conta";
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setPending(true);
     const data = new FormData(event.currentTarget);
-    const email = String(data.get("email") ?? "");
-    const password = String(data.get("password") ?? "");
     try {
-      const result =
-        mode === "register"
-          ? await authClient.signUp.email({
-              name: String(data.get("name") ?? ""),
-              email,
-              password,
-            })
-          : await authClient.signIn.email({ email, password });
-      if (result.error) {
-        setError(
-          mode === "login"
-            ? "E-mail ou senha inválidos. Confira os dados e tente novamente."
-            : result.error.message || "Não foi possível criar sua conta.",
+      if (mode === "register")
+        registerUser(
+          String(data.get("name") ?? ""),
+          String(data.get("email") ?? ""),
         );
-        return;
-      }
+      else signIn(String(data.get("email") ?? ""));
       router.push(next);
-      router.refresh();
-    } catch {
+    } catch (cause) {
       setError(
-        "Não foi possível conectar à API. Tente novamente em instantes.",
+        cause instanceof Error ? cause.message : "Não foi possível continuar.",
       );
-    } finally {
-      setPending(false);
     }
   }
   return (
@@ -60,14 +49,40 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         <p>
           {mode === "login"
             ? "Entre para anunciar livros e participar de compras e trocas."
-            : "Crie sua conta para dar um novo destino aos seus livros."}
+            : "Crie um perfil local para testar o fluxo do MeLivrei."}
         </p>
         <div className="auth-quote">
           Cada livro encontra seu próximo leitor.
         </div>
       </div>
       <div className="form-panel">
-        <h2>{mode === "login" ? "Entrar na conta" : "Criar conta"}</h2>
+        <h2>
+          {mode === "login"
+            ? "Entrar na demonstração"
+            : "Criar perfil de demonstração"}
+        </h2>
+        <p className="demo-note">
+          Esta é uma simulação local. Nenhuma senha ou dado de pagamento é
+          solicitado.
+        </p>
+        {mode === "login" && (
+          <div className="demo-profiles">
+            <p>Entrar rapidamente como:</p>
+            {users.slice(0, 3).map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                className="profile-choice"
+                onClick={() => {
+                  switchUser(user.id);
+                  router.push(next);
+                }}
+              >
+                {user.name}
+              </button>
+            ))}
+          </div>
+        )}
         <form onSubmit={submit} className="form-stack">
           {mode === "register" && (
             <div className="field">
@@ -92,44 +107,21 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               required
             />
           </div>
-          <div className="field">
-            <label htmlFor="password">Senha</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete={
-                mode === "login" ? "current-password" : "new-password"
-              }
-              required
-              minLength={8}
-              aria-describedby={
-                mode === "register" ? "password-help" : undefined
-              }
-            />
-            {mode === "register" && (
-              <small id="password-help">Use pelo menos 8 caracteres.</small>
-            )}
-          </div>
           {error && (
             <p className="form-error" role="alert">
               {error}
             </p>
           )}
-          <button
-            className="button button-wide"
-            type="submit"
-            disabled={pending}
-          >
-            {pending ? "Aguarde…" : mode === "login" ? "Entrar" : "Criar conta"}
+          <button className="button button-wide" type="submit">
+            {mode === "login" ? "Entrar com e-mail" : "Criar perfil"}
           </button>
         </form>
         <p className="form-switch">
-          {mode === "login" ? "Ainda não tem conta?" : "Já tem conta?"}{" "}
+          {mode === "login" ? "Ainda não tem perfil?" : "Já tem perfil?"}{" "}
           <Link
             href={`${mode === "login" ? "/criar-conta" : "/entrar"}${destination ? `?voltar=${encodeURIComponent(next)}` : ""}`}
           >
-            {mode === "login" ? "Criar conta" : "Entrar"}
+            {mode === "login" ? "Criar perfil" : "Entrar"}
           </Link>
         </p>
       </div>

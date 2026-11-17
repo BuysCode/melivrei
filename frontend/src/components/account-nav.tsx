@@ -2,41 +2,64 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import {
+  currentUser,
+  resetDemo,
+  switchUser,
+  useDemoStore,
+} from "@/lib/demo-store";
 
 export function AccountNav() {
-  const { data: session, isPending } = authClient.useSession();
+  const store = useDemoStore();
+  const user = currentUser(store);
   const router = useRouter();
-  async function leave() {
-    await authClient.signOut();
-    router.refresh();
-    router.push("/");
-  }
   return (
     <div className="account-nav">
-      {isPending ? (
-        <output className="session-loading">
-          <span className="sr-only">Verificando sessão</span>
-        </output>
-      ) : session?.user ? (
+      <select
+        className="demo-switch"
+        aria-label="Perfil de demonstração"
+        value={user?.id ?? ""}
+        onChange={(event) => {
+          switchUser(event.target.value || null);
+          router.refresh();
+        }}
+      >
+        <option value="">Visitante</option>
+        {store.users.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.name}
+          </option>
+        ))}
+      </select>
+      {user ? (
         <>
-          <span className="account-name">
-            Olá, {session.user.name?.split(" ")[0]}
-          </span>
-          <button className="text-button" type="button" onClick={leave}>
+          <Link className="quiet-link" href="/minha-conta">
+            Minha conta
+          </Link>
+          <button
+            className="text-button"
+            type="button"
+            onClick={() => switchUser(null)}
+          >
             Sair
           </button>
         </>
       ) : (
-        <>
-          <Link className="text-button" href="/entrar">
-            Entrar
-          </Link>
-          <Link className="button button-small" href="/criar-conta">
-            Criar conta
-          </Link>
-        </>
+        <Link className="button button-small" href="/entrar">
+          Entrar
+        </Link>
       )}
+      <button
+        className="demo-reset"
+        type="button"
+        title="Restaurar os dados de exemplo"
+        onClick={() => {
+          resetDemo();
+          router.push("/");
+        }}
+      >
+        Reiniciar demo
+      </button>
     </div>
   );
 }

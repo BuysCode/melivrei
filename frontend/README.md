@@ -1,30 +1,39 @@
-# MeLivrei — frontend
+# MeLivrei — demonstração do frontend
 
-Interface web do marketplace MeLivrei, feita com Next.js 16 (App Router), React e TypeScript. O catálogo e os detalhes são renderizados no servidor a partir da API NestJS. Autenticação, publicação e negociações usam a sessão Better Auth mantida pelo backend.
+Interface do marketplace MeLivrei em Next.js 16, React e TypeScript. **Por enquanto, o frontend funciona sem backend, PostgreSQL ou Stripe.** Os dados e as ações são simulados no navegador e persistidos em `localStorage`.
 
-## Rodar localmente
+## Rodar para o pitch
 
-1. Configure e inicie o backend conforme `../backend/README.md` (PostgreSQL, migrações e chaves Stripe de teste).
-2. Copie `.env.example` para `.env.local` e ajuste as variáveis:
-   - `NEXT_PUBLIC_API_URL`: endereço da API acessível pelo navegador (padrão: `http://localhost:3000`).
-   - `API_URL`: endereço da API acessível pelo servidor Next.js. Em Docker, pode ser diferente do endereço público.
-   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: chave pública de testes Stripe (`pk_test_…`). Nunca use a chave secreta no frontend.
-3. Execute `npm install` e `npm run dev -- -p 3001`.
-4. Abra `http://localhost:3001`. O backend deve ter `FRONTEND_URL=http://localhost:3001`.
+```bash
+cd frontend
+npm install
+npm run dev -- -p 3001
+```
 
-## Telas
+Abra `http://localhost:3001`. Nenhum arquivo `.env.local` é necessário para a demonstração.
 
-- `/`: apresentação e anúncios recentes.
-- `/livros`: catálogo com busca por título/autor e filtro de venda/troca.
-- `/livros/[id]`: detalhes, início de compra com Stripe Payment Element ou proposta de troca.
-- `/entrar` e `/criar-conta`: autenticação Better Auth.
-- `/anunciar`: publicação de livros (foto por URL pública, conforme contrato atual da API).
-- `/negociacoes/[id]`: estado e histórico; proprietário pode aceitar ou recusar uma proposta de troca.
+O site começa no perfil **Ana Martins**. Use o seletor de perfil no cabeçalho para alternar entre Ana, Bruno, Camila e visitante. O botão **Reiniciar demo** no cabeçalho (ou **Reiniciar dados da demonstração** em Minha conta) repõe os dados iniciais. Ele apaga os dados locais da demonstração neste navegador.
 
-## Contratos e limites atuais
+## Roteiro sugerido
 
-A API só permite buscar anúncios por texto e modalidade. Filtros por gênero, condição e preço, edição de anúncios, upload de fotos, listagem de negociações do usuário e retomada de um pagamento pendente após recarregar a página dependem de novos endpoints no backend. O frontend não considera um pagamento confirmado até receber o estado atualizado pela API, após o webhook Stripe.
+1. Na página inicial, abra o catálogo. Busque por título ou autor e use os filtros de modalidade, gênero, condição e preço.
+2. Como Ana, abra **A vida invisível de Addie LaRue**, inicie a compra e clique em **Simular pagamento aprovado**. Troque para Bruno e marque a venda como concluída.
+3. Reinicie a demo. Na **Minha conta** de Ana, abra a proposta recebida para **A Hora da Estrela** e aceite ou recuse a troca.
+4. Publique um anúncio em **Anunciar**. Em **Minha conta**, edite ou remova um anúncio disponível.
+5. Se desejar, mude para **Visitante** e percorra as telas de entrada e criação de perfil local.
+
+## Escopo da simulação
+
+- Catálogo, busca e filtros; detalhes dos livros; publicação, edição e remoção dos próprios anúncios.
+- Perfis locais de demonstração e criação de novos perfis. A entrada por e-mail não valida senha; não há autenticação real.
+- Compra, proposta de troca, aceite/recusa, cancelamento, conclusão e histórico de eventos.
+- Pagamento **inteiramente simulado**, sem Stripe ou cobrança. Não insira dados reais de pagamento.
+
+Os dados ficam somente neste navegador. Eles não são compartilhados entre computadores e podem ser apagados ao limpar o armazenamento do site. A integração real com a API, Better Auth e Stripe deve ser retomada após a apresentação; os contratos antigos permanecem em `src/lib/api.ts` e `src/lib/auth-client.ts` como referência.
 
 ## Verificação
 
-`npm run lint` e `npm run build` validam formatação, lint, tipos e build de produção.
+```bash
+npm run lint
+npm run build
+```

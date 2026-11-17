@@ -4,28 +4,34 @@ import { AccountNav } from "./account-nav";
 
 export function SiteHeader() {
   return (
-    <header className="site-header">
-      <div className="shell header-inner">
-        <Link
-          href="/"
-          aria-label="MeLivrei, página inicial"
-          className="brand-link"
-        >
-          <Image
-            src="/brand/logo.svg"
-            alt=""
-            width={164}
-            height={42}
-            priority
-          />
-        </Link>
-        <nav className="main-nav" aria-label="Navegação principal">
-          <Link href="/livros">Explorar livros</Link>
-          <Link href="/anunciar">Anunciar</Link>
-        </nav>
-        <AccountNav />
+    <>
+      <div className="demo-banner">
+        Modo demonstração · dados salvos neste navegador · compra e pagamento
+        simulados
       </div>
-    </header>
+      <header className="site-header">
+        <div className="shell header-inner">
+          <Link
+            href="/"
+            aria-label="MeLivrei, página inicial"
+            className="brand-link"
+          >
+            <Image
+              src="/brand/logo.svg"
+              alt=""
+              width={164}
+              height={42}
+              priority
+            />
+          </Link>
+          <nav className="main-nav" aria-label="Navegação principal">
+            <Link href="/livros">Explorar livros</Link>
+            <Link href="/anunciar">Anunciar</Link>
+          </nav>
+          <AccountNav />
+        </div>
+      </header>
+    </>
   );
 }
 

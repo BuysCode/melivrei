@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { browserApi, type Listing, type ListingMode } from "@/lib/api";
-import { authClient } from "@/lib/auth-client";
+import type { Listing, ListingMode } from "@/lib/api";
+import { currentUser, saveListing, useDemoStore } from "@/lib/demo-store";
 
-export function ListingForm() {
-  const { data: session, isPending } = authClient.useSession();
+export function ListingForm({ listing }: { listing?: Listing }) {
+  const store = useDemoStore();
+  const user = currentUser(store);
   const router = useRouter();
-  const [mode, setMode] = useState<ListingMode>("SALE");
+  const [mode, setMode] = useState<ListingMode>(listing?.mode ?? "SALE");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -24,44 +25,34 @@ export function ListingForm() {
       setPending(false);
       return;
     }
-    const payload = {
-      title: String(data.get("title") ?? "").trim(),
-      author: String(data.get("author") ?? "").trim(),
-      description: String(data.get("description") ?? "").trim(),
-      condition: String(data.get("condition")),
-      mode,
-      genre: String(data.get("genre") ?? "").trim() || undefined,
-      isbn: String(data.get("isbn") ?? "").trim() || undefined,
-      price: mode === "SALE" ? price : undefined,
-      images: imageUrl
-        ? [
-            {
-              url: imageUrl,
-              altText: String(data.get("imageAlt") ?? "").trim() || undefined,
-            },
-          ]
-        : [],
-    };
     try {
-      const listing = await browserApi<Listing>("/listings", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      router.push(`/livros/${listing.id}`);
-      router.refresh();
+      const id = saveListing(
+        {
+          title: String(data.get("title") ?? "").trim(),
+          author: String(data.get("author") ?? "").trim(),
+          description: String(data.get("description") ?? "").trim(),
+          condition: String(data.get("condition")) as Listing["condition"],
+          mode,
+          genre: String(data.get("genre") ?? "").trim(),
+          isbn: String(data.get("isbn") ?? "").trim(),
+          price: mode === "SALE" ? price : null,
+          imageUrl,
+          imageAlt: String(data.get("imageAlt") ?? "").trim(),
+        },
+        listing?.id,
+      );
+      router.push(`/livros/${id}`);
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Não foi possível publicar o anúncio.",
+          : "Não foi possível salvar o anúncio.",
       );
     } finally {
       setPending(false);
     }
   }
-  if (isPending)
-    return <output className="page-loading">Verificando sua conta…</output>;
-  if (!session?.user)
+  if (!user)
     return (
       <div className="state-panel">
         <h2>Entre para anunciar um livro.</h2>
@@ -80,21 +71,44 @@ export function ListingForm() {
             <label htmlFor="title">
               Título <span aria-hidden="true">*</span>
             </label>
-            <input id="title" name="title" maxLength={200} required />
+            <input
+              id="title"
+              name="title"
+              maxLength={200}
+              required
+              defaultValue={listing?.book.title}
+            />
           </div>
           <div className="field">
             <label htmlFor="author">
               Autor <span aria-hidden="true">*</span>
             </label>
-            <input id="author" name="author" maxLength={160} required />
+            <input
+              id="author"
+              name="author"
+              maxLength={160}
+              required
+              defaultValue={listing?.book.author}
+            />
           </div>
           <div className="field">
             <label htmlFor="genre">Gênero</label>
-            <input id="genre" name="genre" maxLength={100} />
+            <input
+              id="genre"
+              name="genre"
+              maxLength={100}
+              defaultValue={listing?.book.genre ?? ""}
+            />
           </div>
           <div className="field">
             <label htmlFor="isbn">ISBN</label>
-            <input id="isbn" name="isbn" maxLength={20} inputMode="numeric" />
+            <input
+              id="isbn"
+              name="isbn"
+              maxLength={20}
+              inputMode="numeric"
+              defaultValue={listing?.book.isbn ?? ""}
+            />
           </div>
         </div>
         <div className="field">
@@ -108,6 +122,7 @@ export function ListingForm() {
             maxLength={2000}
             required
             placeholder="Conte sobre esta edição e os sinais de uso."
+            defaultValue={listing?.description}
           />
         </div>
       </fieldset>
@@ -117,7 +132,12 @@ export function ListingForm() {
           <label htmlFor="condition">
             Condição <span aria-hidden="true">*</span>
           </label>
-          <select id="condition" name="condition" required>
+          <select
+            id="condition"
+            name="condition"
+            required
+            defaultValue={listing?.condition ?? "LIKE_NEW"}
+          >
             <option value="LIKE_NEW">Como novo</option>
             <option value="GOOD">Bom estado</option>
             <option value="FAIR">Estado regular</option>
@@ -165,6 +185,7 @@ export function ListingForm() {
               step="0.01"
               inputMode="decimal"
               required
+              defaultValue={listing?.price ?? ""}
             />
           </div>
         )}
@@ -172,8 +193,8 @@ export function ListingForm() {
       <fieldset className="form-group">
         <legend>Foto do livro</legend>
         <p className="field-hint">
-          Por enquanto, informe o endereço público de uma foto. O envio direto
-          de arquivos ainda não está disponível na API.
+          Informe a URL pública de uma foto. Sem foto, mostraremos uma capa
+          ilustrada.
         </p>
         <div className="field">
           <label htmlFor="imageUrl">URL da imagem</label>
@@ -182,6 +203,7 @@ export function ListingForm() {
             name="imageUrl"
             type="url"
             placeholder="https://…"
+            defaultValue={listing?.images[0]?.url ?? ""}
           />
         </div>
         <div className="field">
@@ -190,6 +212,7 @@ export function ListingForm() {
             id="imageAlt"
             name="imageAlt"
             placeholder="Ex.: Capa e lombada do exemplar"
+            defaultValue={listing?.images[0]?.altText ?? ""}
           />
         </div>
       </fieldset>
@@ -199,7 +222,11 @@ export function ListingForm() {
         </p>
       )}
       <button className="button" type="submit" disabled={pending}>
-        {pending ? "Publicando…" : "Publicar anúncio"}
+        {pending
+          ? "Salvando…"
+          : listing
+            ? "Salvar alterações"
+            : "Publicar anúncio"}
       </button>
     </form>
   );
