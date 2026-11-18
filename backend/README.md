@@ -7,6 +7,35 @@ API REST do marketplace de livros usados MeLivrei. O escopo implementado é comp
 - Node.js 24+
 - PostgreSQL 16+
 
+## Docker
+
+Na raiz do repositório, copie o arquivo de configuração e preencha as chaves de teste do Stripe se for testar pagamentos reais:
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+O ambiente sobe PostgreSQL em `localhost:5432`, a API em `http://localhost:3000` e o frontend em `http://localhost:3001`. O serviço `schema` aplica o schema atual com `prisma db push`; ele é deliberadamente voltado ao desenvolvimento enquanto não existem migrações Prisma versionadas.
+
+Para desenvolvimento com recarregamento automático:
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up --build
+```
+
+Para interromper sem apagar os dados:
+
+```bash
+docker compose down
+```
+
+Para remover também o volume do banco local (ação destrutiva):
+
+```bash
+docker compose down --volumes
+```
+
 ## Configuração
 
 1. Copie `.env.example` para `.env`, gere um valor aleatório de pelo menos 32 caracteres para `BETTER_AUTH_SECRET` e informe as credenciais do Stripe.

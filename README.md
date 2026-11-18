@@ -1,0 +1,166 @@
+# MeLivrei
+
+Marketplace web de livros usados para compra, venda e troca entre usuários. A plataforma permite publicar anúncios, encontrar livros e acompanhar negociações; vendas são projetadas para confirmação por webhook do Stripe, sem armazenamento de dados de cartão.
+
+> **Estado atual:** o frontend está pronto para o pitch em modo demonstração, com dados fictícios persistidos no navegador. A API, autenticação, banco de dados e Stripe estão implementados e documentados para a integração real, mas a interface demonstrativa ainda não consome esses serviços.
+
+## Stack
+
+| Camada | Tecnologias | Responsabilidade |
+| --- | --- | --- |
+| Frontend | Next.js 16, React 19, TypeScript, CSS | Interface, catálogo, anúncios e fluxos demonstrativos. |
+| Backend | NestJS 12, TypeScript, class-validator | API REST, regras de negócio, autorização e documentação Swagger. |
+| Autenticação | Better Auth, bcrypt | Contas, sessões persistidas em cookie e proteção de rotas. |
+| Dados | PostgreSQL 16, Prisma 7 | Persistência relacional de usuários, livros, anúncios e negociações. |
+| Pagamentos | Stripe (sandbox) | Payment Intents e confirmação de eventos por webhook assinado. |
+| Qualidade | Jest, Oxlint, Biome | Testes, lint e validação de qualidade. |
+| Infraestrutura | Docker e Docker Compose | Execução reproduzível de banco, API e frontend. |
+
+## Estrutura de pastas
+
+```text
+.
+├── backend/                 # API NestJS e schema Prisma
+│   ├── prisma/              # Modelos do banco de dados
+│   ├── src/
+│   │   ├── auth/            # Better Auth, guardas e usuário atual
+│   │   ├── database/        # Prisma e conexão PostgreSQL
+│   │   ├── listings/        # Catálogo e anúncios
+│   │   ├── negotiations/    # Compras, trocas e estados
+│   │   └── payments/        # Stripe e processamento de webhook
+│   └── test/                # Configuração de testes
+├── frontend/                # Aplicação Next.js
+│   ├── src/app/             # Rotas e telas
+│   ├── src/components/      # Componentes de interface
+│   ├── src/lib/             # Cliente API, auth e dados da demo
+│   └── public/brand/        # Logotipo e símbolo usados no site
+├── docs/                    # Requisitos, arquitetura, UML e registro de IA
+│   ├── adr/                 # Registros de decisão arquitetural
+│   ├── arquitetura/         # Diagramas C4
+│   ├── prd/                 # Documento de requisitos do produto
+│   └── uml/                 # Diagramas e especificações de casos de uso
+├── identidade-visual/       # Estudos, arquivos finais e guia da marca
+├── compose.yaml             # Ambiente Docker padrão
+├── compose.dev.yaml         # Sobreposição Docker para desenvolvimento
+└── .env.example             # Variáveis do ambiente Docker
+```
+
+## Como executar
+
+### Opção 1 — Ambiente completo com Docker
+
+Pré-requisito: Docker Engine com Docker Compose.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+| Serviço | Endereço |
+| --- | --- |
+| Frontend | http://localhost:3001 |
+| API | http://localhost:3000/api |
+| Swagger | http://localhost:3000/docs |
+| PostgreSQL | `localhost:5432` |
+
+Para desenvolver com recarregamento automático dos códigos:
+
+```bash
+docker compose -f compose.yaml -f compose.dev.yaml up --build
+```
+
+Para encerrar os serviços, preservando os dados locais:
+
+```bash
+docker compose down
+```
+
+Para excluir também o volume do banco de dados local:
+
+```bash
+docker compose down --volumes
+```
+
+### Opção 2 — Frontend local
+
+O frontend pode ser executado sem backend, banco de dados ou chaves do Stripe, pois usa a demonstração local.
+
+```bash
+cd frontend
+npm ci
+npm run dev -- -p 3001
+```
+
+Abra http://localhost:3001. A demonstração inicia com o perfil **Ana Martins**; o seletor no cabeçalho alterna os perfis e o botão **Reiniciar demo** repõe os dados fictícios.
+
+### Opção 3 — Backend local
+
+Pré-requisitos: Node.js 24+, PostgreSQL 16+ e uma instância de banco criada.
+
+```bash
+cd backend
+cp .env.example .env
+# Ajuste DATABASE_URL, BETTER_AUTH_SECRET e as chaves de teste do Stripe no .env
+npm ci
+npm run prisma:generate
+npm run prisma:migrate -- --name init
+npm run start:dev
+```
+
+A API fica disponível em http://localhost:3000/api e a documentação Swagger em http://localhost:3000/docs.
+
+## Comandos de qualidade
+
+```bash
+# backend
+cd backend
+npm test -- --runInBand
+npm run lint
+npm run build
+
+# frontend
+cd ../frontend
+npm run lint
+npm run build
+```
+
+## Documentação
+
+| Documento | Resumo |
+| --- | --- |
+| [PRD-01](docs/prd/PRD-01.md) | Define visão do produto, público, regras de negócio, requisitos funcionais e não funcionais, histórias de usuário, critérios de aceite e rastreabilidade. |
+| [ADR-001](docs/adr/ADR-001-ARQUITETURA-E-STACK.md) | Registra e justifica a arquitetura separada de frontend, API e banco, além da escolha de Next.js, NestJS, PostgreSQL, Prisma, Stripe e Docker Compose. |
+| [Registro de uso de IA](docs/AI_USAGE.md) | Lista os usos da IA como apoio à documentação, implementação, identidade visual, demonstração e infraestrutura do projeto. |
+| [Identidade visual](identidade-visual/README.md) | Reúne estudos, versões aprovadas do logotipo, ícones, exports e guia de aplicação da marca MeLivrei. |
+
+### Diagramas de arquitetura
+
+| Arquivo | Resumo |
+| --- | --- |
+| [C4 — Contexto](docs/arquitetura/c4-contexto.puml) | Apresenta o MeLivrei como marketplace entre visitantes, usuários autenticados e Stripe, delimitando que a entrega física ocorre fora da plataforma. |
+| [C4 — Containers](docs/arquitetura/c4-containers.puml) | Mostra a comunicação entre navegador, frontend Next.js, API NestJS, PostgreSQL via Prisma e Stripe, além dos módulos internos da API. |
+
+### Diagramas UML
+
+| Arquivo | Resumo |
+| --- | --- |
+| [Casos de uso](docs/uml/casos-de-uso.md) | Mostra os atores visitante, usuário, anunciante, interessado e Stripe nos fluxos de conta, catálogo, anúncios, compra, troca, pagamento, negociação e histórico. |
+| [Especificação de casos de uso](docs/uml/especificacao-casos-de-uso.md) | Detalha pré-condições, fluxos principais, alternativas e pós-condições para gerenciar anúncio, comprar livro e propor troca. |
+| [Diagrama de classes](docs/uml/diagrama-de-classes.puml) | Modela as entidades do domínio — usuário, livro, anúncio, negociação, proposta de troca, pagamento e auditoria — com suas relações e estados. |
+| [Sequência de compra com Stripe](docs/uml/sequencia-compra-stripe.puml) | Descreve a compra desde a reserva do anúncio e criação do Payment Intent até o webhook validado, aprovação do pagamento e conclusão da negociação. |
+
+## Fluxos principais
+
+- **Venda:** o interessado inicia a compra, o anúncio é reservado e o pagamento é confirmado exclusivamente pelo webhook assinado do Stripe.
+- **Troca:** o interessado oferece um anúncio próprio; o proprietário aceita ou recusa, e os dois anúncios são atualizados conforme o resultado.
+- **Demonstração:** a interface reproduz esses fluxos localmente, sem cobrança real, para possibilitar uma apresentação independente de serviços externos.
+
+## Variáveis de ambiente
+
+Para Docker, use a raiz do projeto como referência: [.env.example](.env.example). Para execução local da API, use [backend/.env.example](backend/.env.example). Nunca versione arquivos `.env` nem chaves reais do Stripe.
+
+## Limitações atuais
+
+- O frontend de demonstração utiliza `localStorage`; login, pagamento e dados não são reais nesse modo.
+- A integração da interface com a API, Better Auth e Stripe é a próxima etapa após o pitch.
+- O Docker sincroniza o schema com `prisma db push` no ambiente local, porque ainda não há migrações Prisma versionadas para implantação.

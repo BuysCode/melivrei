@@ -1,0 +1,9 @@
+# Local configuration and persistent Docker data
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
