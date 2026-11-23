@@ -5,7 +5,7 @@
 
 ## Visão geral e objetivo
 
-O MeLivrei será um marketplace web para compra, venda e troca de livros usados entre usuários. A plataforma facilita a publicação e a descoberta de livros, registra negociações e reduz fraudes de pagamento por meio da confirmação de transações pelo gateway Stripe.
+O MeLivrei será um marketplace web para compra, venda e troca de livros usados entre usuários. A plataforma facilita a publicação e a descoberta de livros, registra negociações e reduz fraudes de pagamento por meio da confirmação de transações pelo gateway Mercado Pago.
 
 O público-alvo é formado por leitores, estudantes e pessoas interessadas em adquirir, vender ou trocar livros usados.
 
@@ -13,7 +13,9 @@ O público-alvo é formado por leitores, estudantes e pessoas interessadas em ad
 
 - O sistema será um marketplace entre usuários, e não uma loja administrada pelo grupo.
 - Cada anúncio terá uma modalidade: venda ou troca.
-- As vendas utilizarão o Stripe em ambiente de testes/sandbox.
+- As vendas utilizarão o Mercado Pago em ambiente de testes/sandbox.
+- Vendedores vinculam a conta Mercado Pago por OAuth para receber pagamentos.
+- O Checkout Pro usa split 1:1 somente após a configuração e habilitação do marketplace; comissão é configurável e começa em zero.
 - A confirmação de pagamento dependerá da confirmação recebida pelo backend, preferencialmente por webhook, e não de comprovantes enviados pelos usuários.
 - A negociação e a entrega física dos livros serão realizadas fora da plataforma; o sistema registrará seus estados e confirmações.
 
@@ -30,14 +32,16 @@ O público-alvo é formado por leitores, estudantes e pessoas interessadas em ad
 
 ### Venda e troca
 
-- A venda fica pendente até a confirmação do Stripe; pagamento recusado ou expirado libera o anúncio novamente.
+- A venda fica pendente até a confirmação do Mercado Pago; pagamento recusado ou expirado libera o anúncio novamente.
 - O sistema não aceitará comprovante enviado pelo usuário como confirmação de pagamento.
 - O interessado deve indicar o livro que oferecerá na troca, que depende do aceite do proprietário do anúncio.
 - Após a confirmação de uma troca, os anúncios envolvidos ficam indisponíveis. O cancelamento antes da conclusão pode liberá-los novamente.
 
 ### Pagamentos
 
-Os pagamentos de vendas devem possuir estados pendente, aprovado, recusado, expirado e estornado. A aplicação deve armazenar apenas os identificadores e metadados necessários da transação Stripe, sem armazenar dados completos de cartão.
+Os pagamentos de vendas devem possuir estados pendente, aprovado, recusado, expirado e estornado. A aplicação deve armazenar apenas os identificadores e metadados necessários da transação Mercado Pago, sem armazenar dados completos de cartão.
+
+Os tokens OAuth do vendedor devem ser cifrados. Um pagamento só muda de estado após webhook autenticado e consulta da API do Mercado Pago. A aplicação não simula repasse se o split estiver indisponível.
 
 ## Fluxos
 
@@ -51,8 +55,8 @@ Os pagamentos de vendas devem possuir estados pendente, aprovado, recusado, expi
 
 ### Comprar um livro
 
-1. O comprador inicia a compra e o sistema cria uma transação pendente no Stripe.
-2. O comprador conclui o pagamento e o backend recebe e valida a confirmação do Stripe.
+1. O comprador inicia a compra e o sistema cria uma transação pendente no Mercado Pago.
+2. O comprador conclui o pagamento e o backend recebe e valida a confirmação do Mercado Pago.
 3. O sistema aprova a negociação e atualiza o anúncio.
 4. O vendedor registra a entrega ou conclusão da negociação.
 
@@ -73,9 +77,10 @@ Os pagamentos de vendas devem possuir estados pendente, aprovado, recusado, expi
 - **RF-006 — Pesquisa e filtros:** permitir pesquisar livros por título e autor, além de filtrar por gênero, modalidade, preço e condição.
 - **RF-007 — Negociação de venda:** permitir que um interessado solicite a compra de um livro e acompanhe o estado da negociação.
 - **RF-008 — Negociação de troca:** permitir que um interessado proponha um livro próprio em troca do livro anunciado, cabendo ao proprietário aceitar ou recusar a proposta.
-- **RF-009 — Pagamento Stripe:** criar e acompanhar pagamentos de vendas por meio do Stripe, validando a confirmação recebida pelo backend.
+- **RF-009 — Pagamento Mercado Pago:** criar e acompanhar pagamentos de vendas por meio do Mercado Pago, validando a confirmação recebida pelo backend.
 - **RF-010 — Estados de negociação:** atualizar negociações e anúncios conforme eventos de solicitação, pagamento, aceite, cancelamento e conclusão.
 - **RF-011 — Histórico:** manter o histórico das principais alterações de anúncios, negociações e pagamentos.
+- **RF-012 — Conta Mercado Pago:** permitir ao vendedor conectar, consultar e remover localmente sua conta via OAuth com proteção CSRF e tokens cifrados.
 
 ## Requisitos não funcionais
 
@@ -84,8 +89,8 @@ Os pagamentos de vendas devem possuir estados pendente, aprovado, recusado, expi
 - **RNF-003 — Persistência:** os dados persistentes devem ser armazenados em PostgreSQL utilizando Prisma como ORM.
 - **RNF-004 — Documentação de API:** o backend deve disponibilizar documentação interativa da API por meio de Swagger/OpenAPI.
 - **RNF-005 — Segurança de credenciais:** senhas devem ser armazenadas com hash seguro, nunca em texto puro.
-- **RNF-006 — Segurança de pagamentos:** dados completos de cartão não devem ser armazenados pela aplicação; as credenciais do Stripe devem ser protegidas por variáveis de ambiente.
-- **RNF-007 — Confiabilidade de pagamentos:** a conclusão de uma venda deve depender de confirmação validada pelo backend, incluindo eventos recebidos por webhook do Stripe.
+- **RNF-006 — Segurança de pagamentos:** dados completos de cartão não devem ser armazenados pela aplicação; as credenciais do Mercado Pago devem ser protegidas por variáveis de ambiente.
+- **RNF-007 — Confiabilidade de pagamentos:** a conclusão de uma venda deve depender de confirmação validada pelo backend, incluindo eventos recebidos por webhook do Mercado Pago.
 - **RNF-008 — Testabilidade:** as regras principais de venda, troca e pagamento devem possuir testes automatizados.
 - **RNF-009 — Usabilidade:** a interface deve ser responsiva e permitir concluir os fluxos principais em desktop e dispositivos móveis.
 - **RNF-010 — Manutenibilidade:** o código deve aplicar orientação a objetos, encapsulamento, separação de responsabilidades e documentação dos módulos principais.
@@ -100,7 +105,7 @@ Os pagamentos de vendas devem possuir estados pendente, aprovado, recusado, expi
 | **US-002 — Acessar a conta:** como usuário cadastrado, quero entrar e sair da plataforma com segurança. (`RF-002`) | **AC-003:** credenciais válidas autenticam o usuário. **AC-004:** credenciais inválidas são recusadas sem revelar qual dado está incorreto. |
 | **US-003 — Publicar livro:** como usuário, quero criar um anúncio com os dados e fotos do livro. (`RF-003`, `RF-004`) | **AC-005:** campos obrigatórios válidos criam um anúncio disponível. **AC-006:** o proprietário pode editar ou remover seu anúncio. **AC-007:** outro usuário não pode alterá-lo. **AC-008:** campos obrigatórios ausentes impedem a publicação. |
 | **US-004 — Encontrar livro:** como visitante ou usuário, quero visualizar, pesquisar e filtrar anúncios. (`RF-005`, `RF-006`) | **AC-009:** o catálogo exibe anúncios disponíveis. **AC-010:** filtros exibem apenas resultados correspondentes. **AC-011:** a ausência de resultados é informada. |
-| **US-005 — Comprar livro:** como comprador, quero solicitar a compra e pagar pelo Stripe. (`RF-007`, `RF-009`) | **AC-012:** uma compra válida cria negociação e cobrança pendente. **AC-013:** webhook válido aprova a negociação. **AC-014:** comprovante manual não aprova a negociação. **AC-015:** recusa ou expiração encerra a tentativa e libera o anúncio. |
+| **US-005 — Comprar livro:** como comprador, quero solicitar a compra e pagar pelo Mercado Pago. (`RF-007`, `RF-009`) | **AC-012:** uma compra válida cria negociação e Checkout Pro pendente. **AC-013:** webhook validado e pagamento consultado aprovam a negociação. **AC-014:** retorno do navegador ou comprovante manual não aprova a negociação. **AC-015:** recusa ou expiração encerra a tentativa e libera o anúncio. |
 | **US-006 — Propor troca:** como interessado, quero oferecer um livro próprio em troca de outro. (`RF-008`) | **AC-016:** a proposta vincula os dois anúncios. **AC-017:** o aceite reserva os dois anúncios. **AC-018:** a recusa encerra a negociação sem indisponibilizá-los definitivamente. |
 | **US-007 — Acompanhar negociação:** como participante, quero consultar o estado e o histórico de uma negociação. (`RF-010`, `RF-011`) | **AC-019:** uma segunda negociação ativa para o mesmo anúncio é bloqueada. **AC-020:** os participantes visualizam estado atual e histórico relevante. |
 
@@ -124,8 +129,8 @@ Os pagamentos de vendas devem possuir estados pendente, aprovado, recusado, expi
 
 - Frontend: Next.js com React e TypeScript; backend: NestJS com TypeScript.
 - Banco de dados: PostgreSQL, acessado por Prisma.
-- Pagamentos: Stripe em ambiente de testes/sandbox; documentação de API: Swagger/OpenAPI.
+- Pagamentos: Mercado Pago em ambiente de testes/sandbox; documentação de API: Swagger/OpenAPI.
 - Testes automatizados: Jest e testes de integração dos fluxos principais.
 - Empacotamento e execução local: Docker Compose.
-- A aplicação deve proteger segredos do Stripe por variáveis de ambiente e não deve armazenar dados completos de cartão.
+- A aplicação deve proteger segredos do Mercado Pago por variáveis de ambiente e não deve armazenar dados completos de cartão.
 - O sistema deve manter documentação de requisitos, diagramas UML, C4, ADR, README, CHANGELOG e registro de uso de IA.

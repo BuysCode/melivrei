@@ -50,7 +50,7 @@ export function PurchaseOrTrade({ listing }: { listing: Listing }) {
       <div className="action-box">
         <h2>Gostou deste livro?</h2>
         <p>
-          Entre na demonstração para{" "}
+          Entre na sua conta para{" "}
           {listing.mode === "SALE" ? "iniciar a compra" : "propor uma troca"}.
         </p>
         <Link
@@ -78,7 +78,6 @@ export function PurchaseOrTrade({ listing }: { listing: Listing }) {
       </h2>
       {listing.mode === "SALE" ? (
         <>
-          <p>O pagamento será simulado. Nenhum valor será cobrado.</p>
           {error && (
             <p className="form-error" role="alert">
               {error}

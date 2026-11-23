@@ -3,17 +3,11 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import {
-  registerUser,
-  signIn,
-  switchUser,
-  useDemoStore,
-} from "@/lib/demo-store";
+import { registerUser, signIn } from "@/lib/demo-store";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { users } = useDemoStore();
   const [error, setError] = useState("");
   const destination = searchParams.get("voltar");
   const next =
@@ -49,7 +43,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         <p>
           {mode === "login"
             ? "Entre para anunciar livros e participar de compras e trocas."
-            : "Crie um perfil local para testar o fluxo do MeLivrei."}
+            : "Crie seu perfil e encontre novas histórias para a sua estante."}
         </p>
         <div className="auth-quote">
           Cada livro encontra seu próximo leitor.
@@ -58,31 +52,9 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
       <div className="form-panel">
         <h2>
           {mode === "login"
-            ? "Entrar na demonstração"
-            : "Criar perfil de demonstração"}
+            ? "Acesse sua conta"
+            : "Criar sua conta"}
         </h2>
-        <p className="demo-note">
-          Esta é uma simulação local. Nenhuma senha ou dado de pagamento é
-          solicitado.
-        </p>
-        {mode === "login" && (
-          <div className="demo-profiles">
-            <p>Entrar rapidamente como:</p>
-            {users.slice(0, 3).map((user) => (
-              <button
-                key={user.id}
-                type="button"
-                className="profile-choice"
-                onClick={() => {
-                  switchUser(user.id);
-                  router.push(next);
-                }}
-              >
-                {user.name}
-              </button>
-            ))}
-          </div>
-        )}
         <form onSubmit={submit} className="form-stack">
           {mode === "register" && (
             <div className="field">

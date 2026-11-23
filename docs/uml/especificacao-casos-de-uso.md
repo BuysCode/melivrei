@@ -35,7 +35,7 @@ Este documento detalha os casos de uso centrais do MeLivrei. Os identificadores 
 
 ## UC-06 — Comprar livro
 
-**Atores:** Interessado, Anunciante e Stripe.
+**Atores:** Interessado, Anunciante e Mercado Pago.
 
 **Objetivo:** iniciar e concluir a compra de um livro anunciado.
 
@@ -46,9 +46,9 @@ Este documento detalha os casos de uso centrais do MeLivrei. Os identificadores 
 1. O interessado seleciona um anúncio disponível.
 2. O sistema verifica a disponibilidade e cria uma negociação com status `PENDING_PAYMENT`.
 3. O sistema reserva temporariamente o anúncio.
-4. O sistema cria uma cobrança no Stripe.
-5. O interessado conclui o pagamento no Stripe.
-6. O Stripe envia a confirmação ao backend.
+4. O sistema cria uma cobrança no Mercado Pago.
+5. O interessado conclui o pagamento no Mercado Pago.
+6. O Mercado Pago envia a confirmação ao backend.
 7. O backend valida a assinatura e a idempotência do evento.
 8. O sistema atualiza o pagamento para `APPROVED`.
 9. O sistema atualiza a negociação e o anúncio.

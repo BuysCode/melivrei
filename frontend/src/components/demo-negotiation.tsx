@@ -18,7 +18,7 @@ const events: Record<string, string> = {
   TRADE_PROPOSED: "Proposta de troca enviada",
   TRADE_ACCEPTED: "Troca aceita",
   TRADE_REJECTED: "Troca recusada",
-  PAYMENT_APPROVED_DEMO: "Pagamento simulado como aprovado",
+  PAYMENT_APPROVED_DEMO: "Pagamento aprovado",
   NEGOTIATION_CANCELLED: "Negociação cancelada",
   NEGOTIATION_COMPLETED: "Negociação concluída",
 };
@@ -60,7 +60,7 @@ export function DemoNegotiationPage({ id }: { id: string }) {
       </div>
     );
   const seller = user.id === listing.ownerId;
-  const act = (action: "accept" | "reject" | "pay" | "cancel" | "complete") => {
+  const act = (action: "accept" | "reject" | "cancel" | "complete") => {
     setError("");
     try {
       decideNegotiation(id, action);
@@ -106,7 +106,7 @@ export function DemoNegotiationPage({ id }: { id: string }) {
         <h2>Estado atual</h2>
         <p>
           {negotiation.status === "PENDING_PAYMENT"
-            ? "Aguardando pagamento simulado do comprador. Nenhuma cobrança real será feita."
+            ? "Aguardando o pagamento do comprador."
             : negotiation.status === "PENDING"
               ? "A proposta aguarda a decisão do proprietário."
               : negotiation.status === "APPROVED"
@@ -125,9 +125,9 @@ export function DemoNegotiationPage({ id }: { id: string }) {
       )}
       <div className="negotiation-actions">
         {negotiation.status === "PENDING_PAYMENT" && !seller && (
-          <button className="button" type="button" onClick={() => act("pay")}>
-            Simular pagamento aprovado
-          </button>
+          <Link className="button" href={`/negociacoes/${id}/checkout`}>
+            Ir para o checkout
+          </Link>
         )}
         {negotiation.status === "PENDING" && seller && (
           <>

@@ -1,0 +1,57 @@
+@startuml sequencia-compra-mercado-pago
+title MeLivrei — Compra no Checkout Pro com split 1:1
+actor Comprador
+actor Vendedor
+participant Frontend
+participant API
+database DB
+participant "Mercado Pago OAuth" as OAuth
+participant "Checkout Pro / Preferências" as MP
+participant "Webhook Mercado Pago" as Webhook
+
+== Vincular vendedor ==
+Vendedor -> Frontend: Solicita vinculação da conta
+Frontend -> API: GET /payments/mercadopago/connect (sessão)
+API -> DB: Persiste hash de state de uso único
+API --> Frontend: authorizationUrl
+Frontend -> OAuth: Autoriza o MeLivrei
+OAuth -> API: Callback code + state
+API -> DB: Consome state e salva tokens cifrados
+
+== Criar compra ==
+Comprador -> Frontend: Escolhe anúncio de venda
+Frontend -> API: POST /negotiations/purchases (listingId)
+API -> DB: Valida anúncio, preço e vendedor vinculado
+alt split desabilitado ou conta inválida
+  API --> Frontend: Erro controlado, sem checkout
+else compra disponível
+  API -> DB: Reserva anúncio e registra negociação/pagamento
+  API -> MP: POST /checkout/preferences com token OAuth do vendedor
+  note right of MP
+    external_reference = negociação
+    marketplace_fee calculado no backend
+    idempotência por negociação
+  end note
+  MP --> API: preference id e init_point
+  API -> DB: Salva preferência e URL de checkout
+  API --> Frontend: checkoutUrl
+  Frontend --> Comprador: Redireciona ao Checkout Pro
+end
+
+== Confirmar por webhook ==
+Comprador -> MP: Conclui ou abandona pagamento
+MP -> Webhook: Notificação payment (x-signature)
+Webhook -> API: POST /payments/webhook?data.id=:id
+API -> API: Valida HMAC, timestamp e identificador
+API -> DB: Localiza vendedor pela conta provider
+API -> MP: GET /v1/payments/:id com token OAuth do vendedor
+MP --> API: Estado remoto + external_reference + valor
+API -> API: Confere vendedor, moeda, valor e pedido
+API -> DB: Idempotência, evento, pagamento e negociação
+API --> Webhook: HTTP 200
+
+note over Comprador, DB
+Retorno do navegador não confirma pagamento.
+Trocas seguem o fluxo próprio e não usam gateway.
+end note
+@enduml

@@ -32,8 +32,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={noto.variable}>
-      <body>
+    <html lang="pt-BR" className={noto.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <a className="skip-link" href="#conteudo">
           Pular para o conteúdo
         </a>

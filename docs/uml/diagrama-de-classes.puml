@@ -19,6 +19,20 @@ package "Identidade e acesso" {
         +updateProfile(): void
     }
 
+    class SellerPaymentAccount {
+        +providerUserId: String
+        -accessTokenEncrypted: String
+        -refreshTokenEncrypted: String
+        +tokenExpiresAt: DateTime
+        +status: String
+    }
+
+    class MercadoPagoOAuthState {
+        -stateHash: String
+        +expiresAt: DateTime
+        +consumedAt: DateTime
+    }
+
     enum UserRole {
         USER
         ADMIN
@@ -127,8 +141,11 @@ package "Pagamentos" {
     class Payment {
         +id: UUID
         +provider: PaymentProvider
-        +providerPaymentId: String
+        +providerPaymentId: String?
+        +providerPreferenceId: String?
+        +checkoutUrl: String?
         +amount: Money
+        +marketplaceFee: Money
         +purpose: PaymentPurpose
         +status: PaymentStatus
         +createdAt: DateTime
@@ -147,7 +164,7 @@ package "Pagamentos" {
     }
 
     enum PaymentProvider {
-        STRIPE
+        MERCADO_PAGO
     }
 
     enum PaymentPurpose {
@@ -159,7 +176,9 @@ package "Pagamentos" {
         APPROVED
         REFUSED
         EXPIRED
+        CANCELLED
         REFUNDED
+        IN_DISPUTE
     }
 }
 
@@ -175,6 +194,8 @@ package "Auditoria" {
 }
 
 User "1" -- "0..*" Listing : owns >
+User "1" -- "0..1" SellerPaymentAccount : connects >
+User "1" -- "0..*" MercadoPagoOAuthState : authorizes >
 User "1" -- "0..*" Negotiation : participates >
 User "1" -- "0..*" TradeOffer : proposes >
 User "1" -- "0..*" AuditEvent : triggers >
@@ -202,7 +223,7 @@ note right of Payment
   A aplicação não armazena
   dados completos de cartão.
   A confirmação é recebida
-  por webhook do Stripe.
+  por webhook do Mercado Pago.
 end note
 
 @enduml

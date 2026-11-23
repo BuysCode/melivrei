@@ -245,7 +245,7 @@ export function switchUser(id: string | null) {
 export function registerUser(name: string, email: string) {
   const normalized = email.trim().toLowerCase();
   if (state.users.some((user) => user.email.toLowerCase() === normalized))
-    throw new Error("Este e-mail já está cadastrado na demonstração.");
+    throw new Error("Este e-mail já está cadastrado.");
   const user = {
     id: crypto.randomUUID(),
     name: name.trim(),
@@ -261,7 +261,7 @@ export function signIn(email: string) {
   const user = state.users.find(
     (item) => item.email.toLowerCase() === email.trim().toLowerCase(),
   );
-  if (!user) throw new Error("E-mail não encontrado na demonstração.");
+  if (!user) throw new Error("Não encontramos uma conta com este e-mail.");
   switchUser(user.id);
 }
 export type ListingInput = {

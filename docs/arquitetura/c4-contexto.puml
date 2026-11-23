@@ -17,12 +17,12 @@ rectangle "Usuário autenticado\n(comprador, vendedor, anunciante ou interessado
 
 rectangle "MeLivrei\nMarketplace web de livros usados\n\nPermite publicar anúncios, pesquisar livros,\nnegociar vendas e trocas,\ncontrolar pagamentos e histórico." as sistema #DCFCE7
 
-rectangle "Stripe\nGateway externo de pagamentos" as stripe #FFF7ED
+rectangle "Mercado Pago\nGateway externo de pagamentos" as mercadoPago #FFF7ED
 
 visitante --> sistema : Consulta catálogo e pesquisa livros\nCria uma conta
 usuario --> sistema : Gerencia anúncios\nCompra, vende e propõe trocas\nAcompanha negociações
-sistema --> stripe : Cria pagamentos de vendas\nSolicita estornos
-stripe --> sistema : Envia confirmação de pagamento\npor webhook assinado
+sistema --> mercadoPago : Autoriza vendedores via OAuth\nCria checkout e split 1:1 configurável
+mercadoPago --> sistema : Notifica pagamento\npor webhook assinado
 
 legend right
     |= Elemento |= Significado |

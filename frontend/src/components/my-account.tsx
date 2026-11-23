@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  currentUser,
-  removeListing,
-  resetDemo,
-  useDemoStore,
-} from "@/lib/demo-store";
+import { currentUser, removeListing, useDemoStore } from "@/lib/demo-store";
 import { ListingCard } from "./listing-card";
 
 const statusLabels: Record<string, string> = {
@@ -47,16 +42,6 @@ export function MyAccount() {
       <div className="page-heading">
         <h1>Olá, {user.name.split(" ")[0]}.</h1>
         <p>Seus livros e suas negociações em um só lugar.</p>
-        <button
-          className="text-button"
-          type="button"
-          onClick={() => {
-            resetDemo();
-            window.location.assign("/");
-          }}
-        >
-          Reiniciar dados da demonstração
-        </button>
       </div>
       <div className="account-section-heading">
         <h2>Meus anúncios</h2>

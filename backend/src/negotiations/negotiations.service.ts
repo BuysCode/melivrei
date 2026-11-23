@@ -30,6 +30,7 @@ export class NegotiationsService {
     );
     if (listing.ownerId === buyerId)
       throw new BadRequestException('Você não pode comprar o próprio anúncio.');
+    await this.payments.assertSellerCanReceive(listing.ownerId);
     const negotiation = await this.prisma.$transaction(async (tx) => {
       const current = await tx.listing.findUniqueOrThrow({
         where: { id: listing.id },

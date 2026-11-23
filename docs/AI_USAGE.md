@@ -12,7 +12,7 @@ A IA apoiou a substituição da nomenclatura anterior “Brique Literário” po
 
 ## 3. Definição da arquitetura e da stack
 
-A IA ajudou a registrar a decisão arquitetural do projeto, incluindo a organização em monorepo, frontend em Next.js, backend em NestJS, banco PostgreSQL, Prisma como ORM, Better Auth para autenticação e Stripe para pagamentos.
+A IA ajudou a registrar a decisão arquitetural do projeto, incluindo a organização em monorepo, frontend em Next.js, backend em NestJS, banco PostgreSQL, Prisma como ORM, Better Auth para autenticação e a integração inicial de pagamentos, posteriormente substituída pelo Mercado Pago (ver seção 17).
 
 ## 4. Criação da base do frontend e backend
 
@@ -30,9 +30,9 @@ A IA colaborou na construção da API para cadastrar e consultar anúncios, inic
 
 A IA auxiliou na modelagem das entidades de usuários, livros, anúncios, imagens, negociações, propostas de troca, pagamentos, eventos de pagamento, auditoria e autenticação, incluindo relacionamentos e regras de integridade.
 
-## 8. Integração do fluxo de pagamentos com Stripe
+## 8. Integração inicial do fluxo de pagamentos
 
-A IA apoiou a integração do backend com o Stripe para criar intenções de pagamento, tratar webhooks, impedir o reprocessamento de eventos e atualizar o status de pagamentos, anúncios e negociações.
+A IA apoiou a integração do backend com o provedor anterior para criar intenções de pagamento, tratar webhooks, impedir o reprocessamento de eventos e atualizar o status de pagamentos, anúncios e negociações.
 
 ## 9. Implementação da autenticação com Better Auth
 
@@ -65,3 +65,19 @@ A IA configurou containers para PostgreSQL, API NestJS/Prisma e frontend Next.js
 ## 16. Criação do README geral do projeto
 
 A IA criou o README da raiz do repositório, consolidando a visão geral do MeLivrei, stack, estrutura de pastas, instruções para executar frontend, backend e Docker, comandos de qualidade, resumos da documentação, diagramas C4/UML, variáveis de ambiente e limitações atuais.
+
+## 17. Migração dos pagamentos do backend para Mercado Pago
+
+A IA auxiliou a substituir a integração de pagamentos do backend por Mercado Pago Checkout Pro com OAuth de vendedores, tokens cifrados, split 1:1 configurável, preferências idempotentes, validação de webhooks e atualização persistida dos estados. A IA também apoiou a atualização da migração Prisma, da configuração e da documentação técnica, preservando o fluxo de trocas.
+
+## 18. Ajuste da prévia do frontend
+
+A IA removeu a faixa de demonstração, o seletor de perfis, os botões de reinício e os textos de teste das telas de acesso, compra e negociação. A prévia passou a apresentar a interface do produto com os dados fictícios ainda persistidos em `localStorage`.
+
+## 19. Definição e implementação do checkout na prévia
+
+A IA comparou a aprovação imediata com um checkout e recomendou manter a compra pendente até a confirmação do pagamento, conforme o PRD. Na prévia, adicionou uma página com livro, vendedor, total e botão de pagamento. Abrir o checkout mantém o estado pendente. Efetuar o pagamento na prévia registra uma aprovação local e retorna ao resumo. O fluxo real previsto usa Mercado Pago Checkout Pro e confirmação pelo backend.
+
+## 20. Revisão da documentação do projeto
+
+A IA revisou as referências ao provedor de pagamentos e atualizou os READMEs para descrever o checkout do Mercado Pago no backend e o checkout simulado no frontend. O roteiro da prévia passou a usar a navegação atual, incluindo o acesso por e-mail, o resumo da compra e a etapa de pagamento.
