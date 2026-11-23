@@ -54,7 +54,13 @@ const makeListing = (
   status,
   createdAt: "2026-11-10T12:00:00.000Z",
   book: { title, author, genre, isbn: null },
-  images: [],
+  images: [
+    {
+      id: `${id}-cover`,
+      url: `/demo-covers/${id}.webp`,
+      altText: `Ilustração original para ${title}`,
+    },
+  ],
   owner: {
     id: ownerId,
     name: users.find((user) => user.id === ownerId)?.name ?? "Leitor",

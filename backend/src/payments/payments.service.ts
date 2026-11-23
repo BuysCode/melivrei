@@ -129,6 +129,122 @@ export class PaymentsService {
     });
   }
 
+  async prepareBrick(negotiationId: string, buyerId: string) {
+    const negotiation = await this.prisma.negotiation.findFirst({
+      where: { id: negotiationId, type: 'SALE', participants: { some: { userId: buyerId } } },
+      include: {
+        listing: true,
+        participants: { where: { userId: buyerId }, include: { user: { select: { email: true } } } },
+        payment: true,
+      },
+    });
+    if (!negotiation || negotiation.listing.ownerId === buyerId)
+      throw new NotFoundException('Compra não encontrada.');
+    if (negotiation.status !== NegotiationStatus.PENDING_PAYMENT)
+      throw new ConflictException('Esta compra não está aguardando pagamento.');
+    await this.assertSellerCanReceive(negotiation.listing.ownerId);
+    const amount = this.toMoney(negotiation.listing.price);
+    const payment = negotiation.payment ?? await this.prisma.payment.create({
+      data: { negotiationId, amount, marketplaceFee: this.marketplaceFee(amount) },
+    });
+    return {
+      amount: Number(payment.amount),
+      status: payment.status,
+      submitted: Boolean(payment.providerPaymentId),
+      payer: { email: negotiation.participants[0]?.user.email },
+    };
+  }
+
+  async submitBrick(negotiationId: string, buyerId: string, data: Record<string, unknown>) {
+    const negotiation = await this.prisma.negotiation.findFirst({
+      where: { id: negotiationId, type: 'SALE', participants: { some: { userId: buyerId } } },
+      include: {
+        listing: { include: { book: true } },
+        participants: { where: { userId: buyerId }, include: { user: { select: { email: true } } } },
+        payment: true,
+      },
+    });
+    if (!negotiation || negotiation.listing.ownerId === buyerId)
+      throw new NotFoundException('Compra não encontrada.');
+    if (negotiation.status !== NegotiationStatus.PENDING_PAYMENT || !negotiation.payment)
+      throw new ConflictException('Prepare o checkout antes de enviar o pagamento.');
+    if (negotiation.payment.providerPaymentId)
+      throw new ConflictException('Este pagamento já foi enviado e está sendo processado.');
+    await this.assertSellerCanReceive(negotiation.listing.ownerId);
+
+    const token = typeof data.token === 'string' ? data.token : '';
+    const method = typeof data.payment_method_id === 'string' ? data.payment_method_id : '';
+    const paymentType = typeof data.payment_type === 'string' ? data.payment_type : '';
+    const payer = data.payer && typeof data.payer === 'object'
+      ? data.payer as Record<string, unknown>
+      : {};
+    const buyerEmail = negotiation.participants[0]?.user.email;
+    if (!method || !buyerEmail ||
+        !((paymentType === 'bank_transfer' && method === 'pix') ||
+          (paymentType === 'creditCard' && token)))
+      throw new BadRequestException('Dados de pagamento incompletos.');
+
+    const account = await this.prisma.sellerPaymentAccount.findUniqueOrThrow({ where: { userId: negotiation.listing.ownerId } });
+    const accessToken = await this.getValidAccessToken(account);
+    const amount = Number(negotiation.payment.amount);
+    const request: Record<string, unknown> = {
+      payment_method_id: method,
+      transaction_amount: amount,
+      installments: Number.isInteger(data.installments) ? data.installments : 1,
+      payer: { email: buyerEmail, ...(payer.identification ? { identification: payer.identification } : {}) },
+      external_reference: negotiationId,
+      application_fee: Number(negotiation.payment.marketplaceFee),
+      notification_url: this.config.getOrThrow<string>('MERCADO_PAGO_WEBHOOK_URL'),
+      description: `${negotiation.listing.book.title} — MeLivrei`.slice(0, 256),
+    };
+    if (token) request.token = token;
+    if (typeof data.issuer_id === 'string') request.issuer_id = data.issuer_id;
+    const result = await this.mercadoPago.createPayment(
+      accessToken,
+      request,
+      `negotiation-${negotiationId}-${this.hash(JSON.stringify(data))}`,
+    );
+    if (!result.id) throw new ServiceUnavailableException('Mercado Pago não retornou o pagamento.');
+    const saved = await this.prisma.payment.update({
+      where: { id: negotiation.payment.id },
+      data: {
+        providerPaymentId: String(result.id),
+        providerStatus: result.status,
+        paymentMethodId: result.payment_method_id ?? method,
+      },
+    });
+    return {
+      id: saved.id,
+      status: saved.status,
+      pix: method === 'pix' ? {
+        qrCode: result.point_of_interaction?.transaction_data?.qr_code ?? null,
+        qrCodeBase64: result.point_of_interaction?.transaction_data?.qr_code_base64 ?? null,
+      } : null,
+    };
+  }
+
+  async pixForParticipant(negotiationId: string, buyerId: string) {
+    const negotiation = await this.prisma.negotiation.findFirst({
+      where: { id: negotiationId, type: 'SALE', participants: { some: { userId: buyerId } } },
+      include: { listing: true, payment: true },
+    });
+    if (!negotiation || negotiation.listing.ownerId === buyerId ||
+        negotiation.payment?.paymentMethodId !== 'pix' || !negotiation.payment.providerPaymentId)
+      throw new NotFoundException('Código Pix não encontrado.');
+    const account = await this.prisma.sellerPaymentAccount.findUniqueOrThrow({
+      where: { userId: negotiation.listing.ownerId },
+    });
+    const remote = await this.mercadoPago.getPayment(
+      await this.getValidAccessToken(account), negotiation.payment.providerPaymentId,
+    );
+    if (remote.external_reference !== negotiationId || String(remote.id) !== negotiation.payment.providerPaymentId)
+      throw new BadRequestException('Pagamento Pix não corresponde à compra.');
+    return {
+      qrCode: remote.point_of_interaction?.transaction_data?.qr_code ?? null,
+      qrCodeBase64: remote.point_of_interaction?.transaction_data?.qr_code_base64 ?? null,
+    };
+  }
+
   async createForParticipant(negotiationId: string, userId: string) {
     const negotiation = await this.prisma.negotiation.findFirst({
       where: { id: negotiationId, type: 'SALE', participants: { some: { userId } } },

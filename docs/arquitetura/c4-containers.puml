@@ -26,7 +26,7 @@ user --> browser : Usa
 browser --> frontend : HTTPS
 frontend --> api : REST/JSON\nHTTPS
 api --> db : Prisma/SQL
-api --> mercadoPago : OAuth, preferências Checkout Pro\ne consulta de pagamentos
+api --> mercadoPago : OAuth, criação e consulta de pagamentos\ne webhooks
 mercadoPago --> api : Webhooks assinados
 
 rectangle "Módulos principais da API" as modules #FFFFFF {

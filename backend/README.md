@@ -1,6 +1,6 @@
 # MeLivrei API
 
-API REST do marketplace de livros usados, construída com NestJS 12, Prisma 7 e PostgreSQL 16. Vendas usam Mercado Pago Checkout Pro; trocas permanecem no módulo de negociações e não passam pelo gateway.
+API REST do marketplace de livros usados, construída com NestJS 12, Prisma 7 e PostgreSQL 16. Vendas usam Mercado Pago Payment Brick com pagamentos pela Payments API; trocas permanecem no módulo de negociações e não passam pelo gateway.
 
 ## Desenvolvimento local
 
@@ -23,7 +23,7 @@ Em banco preexistente criado pelo `db push`, registre a migração de baseline u
 
 ## Pagamentos e segurança
 
-O registro de uma compra é uma `Negotiation` do tipo `SALE`, que também funciona como referência do pedido. O backend calcula o preço a partir do anúncio persistido e cria uma preferência Checkout Pro usando o access token OAuth criptografado do vendedor. O comprador recebe `checkoutUrl`; o retorno do navegador não aprova pedidos. Só o webhook validado e a consulta autenticada do pagamento no Mercado Pago atualizam o estado.
+O registro de uma compra é uma `Negotiation` do tipo `SALE`, que também funciona como referência do pedido. No checkout incorporado, o backend calcula o preço a partir do anúncio persistido, recebe do Payment Brick apenas os dados tokenizados e cria o pagamento com o access token OAuth cifrado do vendedor. O comprador pode usar Pix ou cartão de crédito. Para Pix, a API devolve QR Code e código copia e cola. Só o webhook validado e a consulta autenticada do pagamento no Mercado Pago aprovam o pedido. O fluxo legado de Checkout Pro ainda está disponível para chamadas da API sem `deferCheckout`.
 
 O split 1:1 só funciona quando a aplicação e a conta do vendedor estão habilitadas pelo Mercado Pago. `MERCADO_PAGO_SPLIT_ENABLED` deve ser `true` apenas após configuração/homologação do marketplace. A integração bloqueia vendas se não estiver habilitado ou se o vendedor não estiver vinculado. A comissão vem de `MERCADO_PAGO_MARKETPLACE_FEE_PERCENT` (padrão zero, sem percentual comercial presumido).
 
@@ -56,14 +56,16 @@ Todas as rotas protegidas usam o cookie de sessão Better Auth.
 | GET | `/api/payments/mercadopago/callback` | Público, state obrigatório | Valida state de uso único e vincula conta |
 | GET | `/api/payments/mercadopago/connection` | Usuário autenticado | Status sem tokens |
 | DELETE | `/api/payments/mercadopago/connection` | Usuário autenticado | Remove vínculo local |
-| POST | `/api/negotiations/purchases` | Comprador autenticado | Cria negociação de venda e retorna checkout |
-| POST | `/api/payments/negotiations/:id/checkout` | Comprador participante | Cria ou recupera checkout pendente |
+| POST | `/api/negotiations/purchases` | Comprador autenticado | Cria negociação de venda; com `deferCheckout: true`, aguarda o Payment Brick |
+| POST | `/api/payments/negotiations/:id/checkout` | Comprador participante | Prepara valor e comprador para o Payment Brick |
+| POST | `/api/payments/negotiations/:id/submit` | Comprador participante | Cria pagamento Pix ou cartão com dados tokenizados |
+| GET | `/api/payments/negotiations/:id/pix` | Comprador participante | Recupera QR Code e código copia e cola do Pix pendente |
 | GET | `/api/payments` | Usuário autenticado | Lista apenas pagamentos das próprias negociações |
 | GET | `/api/negotiations/:id` | Participante | Consulta pagamento e estado da negociação |
 | POST | `/api/payments/webhook?data.id=:id` | Público, assinatura HMAC | Consulta e processa notificação de pagamento |
 | POST | `/api/negotiations/trades` | Usuário autenticado | Propõe troca sem gateway |
 
-Exemplo de retorno de início OAuth: `{"authorizationUrl":"https://auth.mercadopago.com/authorization?..."}`. Após validar o callback, a API redireciona para o frontend configurado com `?mercado_pago=connected`. Checkout retorna o pagamento persistido incluindo `checkoutUrl`, `amount`, `marketplaceFee` e estado local.
+Exemplo de retorno de início OAuth: `{"authorizationUrl":"https://auth.mercadopago.com/authorization?..."}`. Após validar o callback, a API redireciona para o frontend configurado com `?mercado_pago=connected`. O checkout incorporado recebe o valor calculado no servidor e o status local; o retorno do pagamento Pix fornece QR Code e código copia e cola.
 
 ## Dados e limitações
 

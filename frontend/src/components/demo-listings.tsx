@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
-import type { ListingMode } from "@/lib/api";
-import { useDemoStore } from "@/lib/demo-store";
+import { liveCheckout, type Listing, type ListingMode } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
+import { currentUser, useDemoStore } from "@/lib/demo-store";
 import { ListingCard } from "./listing-card";
 
-export function RecentListings() {
-  const { listings } = useDemoStore();
+export function RecentListings({ source }: { source?: Listing[] }) {
+  const demo = useDemoStore();
+  const listings = source ?? demo.listings;
   const recent = listings
     .filter((item) => item.status === "AVAILABLE")
     .slice(0, 4);
@@ -19,8 +21,12 @@ export function RecentListings() {
     </div>
   );
 }
-export function Catalog() {
-  const { listings } = useDemoStore();
+export function Catalog({ source }: { source?: Listing[] }) {
+  const demo = useDemoStore();
+  const session = authClient.useSession();
+  const userId = liveCheckout ? session.data?.user.id : currentUser(demo)?.id;
+  const allListings = source ?? demo.listings;
+  const listings = allListings.filter((item) => item.ownerId !== userId);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<ListingMode | "">("");
   const [genre, setGenre] = useState("");
@@ -148,7 +154,9 @@ export function Catalog() {
           Anunciar um livro →
         </Link>
       </div>
-      {results.length ? (
+      {liveCheckout && session.isPending ? (
+        <p role="status">Carregando livros…</p>
+      ) : results.length ? (
         <div className="listing-grid">
           {results.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />

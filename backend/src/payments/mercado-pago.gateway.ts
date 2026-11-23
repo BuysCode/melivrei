@@ -47,6 +47,14 @@ export class MercadoPagoGateway extends PaymentGateway {
     );
   }
 
+  createPayment(accessToken: string, body: Record<string, unknown>, idempotencyKey: string) {
+    return this.request<MpPayment>('/v1/payments', accessToken, {
+      method: 'POST',
+      headers: { 'X-Idempotency-Key': idempotencyKey },
+      body: JSON.stringify(body),
+    });
+  }
+
   getPayment(accessToken: string, paymentId: string) {
     return this.request<MpPayment>(`/v1/payments/${encodeURIComponent(paymentId)}`, accessToken);
   }
@@ -104,6 +112,12 @@ export type MpPayment = {
   currency_id?: string;
   payment_method_id?: string;
   external_reference?: string;
+  point_of_interaction?: {
+    transaction_data?: {
+      qr_code?: string;
+      qr_code_base64?: string;
+    };
+  };
 };
 
 export type MpToken = MpTokenResponse;

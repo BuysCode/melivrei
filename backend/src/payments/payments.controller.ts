@@ -23,7 +23,27 @@ export class PaymentsController {
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Criar ou recuperar checkout da negociação de venda' })
   checkout(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
-    return this.payments.createForParticipant(id, user.id);
+    return this.payments.prepareBrick(id, user.id);
+  }
+
+  @Post('negotiations/:id/submit')
+  @UseGuards(BetterAuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Enviar os dados tokenizados do Payment Brick' })
+  submitBrick(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Req() request: Request,
+  ) {
+    return this.payments.submitBrick(id, user.id, request.body as Record<string, unknown>);
+  }
+
+  @Get('negotiations/:id/pix')
+  @UseGuards(BetterAuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Consultar o código Pix do pagamento pendente' })
+  pix(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.payments.pixForParticipant(id, user.id);
   }
 
   @Get('mercadopago/connect')

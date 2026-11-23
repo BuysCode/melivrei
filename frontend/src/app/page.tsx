@@ -1,7 +1,9 @@
+import { getListings, liveCheckout } from "@/lib/api";
 import Link from "next/link";
 import { RecentListings } from "@/components/demo-listings";
 
-export default function Home() {
+export default async function Home() {
+  const listings = liveCheckout ? await getListings() : undefined;
   return (
     <>
       <section className="hero">
@@ -61,7 +63,7 @@ export default function Home() {
             Ver todo o catálogo <span aria-hidden="true">→</span>
           </Link>
         </div>
-        <RecentListings />
+        <RecentListings source={listings} />
       </section>
       <section className="section section-how">
         <div className="shell how-grid">

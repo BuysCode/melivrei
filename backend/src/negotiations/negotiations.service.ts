@@ -32,15 +32,12 @@ export class NegotiationsService {
       throw new BadRequestException('Você não pode comprar o próprio anúncio.');
     await this.payments.assertSellerCanReceive(listing.ownerId);
     const negotiation = await this.prisma.$transaction(async (tx) => {
-      const current = await tx.listing.findUniqueOrThrow({
-        where: { id: listing.id },
-      });
-      if (current.status !== ListingStatus.AVAILABLE)
-        throw new BadRequestException('Anúncio indisponível.');
-      await tx.listing.update({
-        where: { id: listing.id },
+      const reservation = await tx.listing.updateMany({
+        where: { id: listing.id, status: ListingStatus.AVAILABLE },
         data: { status: ListingStatus.RESERVED },
       });
+      if (reservation.count === 0)
+        throw new BadRequestException('Anúncio indisponível.');
       return tx.negotiation.create({
         data: {
           listingId: listing.id,
@@ -60,6 +57,7 @@ export class NegotiationsService {
         },
       });
     });
+    if (dto.deferCheckout) return { ...negotiation, payment: null };
     const payment = await this.payments.createForNegotiation(negotiation.id);
     return { ...negotiation, payment };
   }
@@ -152,11 +150,22 @@ export class NegotiationsService {
       });
     });
   }
+  listPurchases(userId: string) {
+    return this.prisma.negotiation.findMany({
+      where: { type: NegotiationType.SALE, participants: { some: { userId } } },
+      select: {
+        id: true,
+        listing: { select: { ownerId: true, book: { select: { title: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOneForParticipant(userId: string, id: string) {
     const negotiation = await this.prisma.negotiation.findFirst({
       where: { id, participants: { some: { userId } } },
       include: {
-        listing: { include: { book: true } },
+        listing: { include: { book: true, owner: { select: { id: true, name: true } } } },
         tradeOffer: true,
         payment: true,
         auditEvents: { orderBy: { createdAt: 'desc' } },

@@ -3,12 +3,43 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import type { Listing, ListingMode } from "@/lib/api";
+import {
+  browserApi,
+  liveCheckout,
+  type Listing,
+  type ListingMode,
+} from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import { currentUser, saveListing, useDemoStore } from "@/lib/demo-store";
 
 export function ListingForm({ listing }: { listing?: Listing }) {
+  return liveCheckout ? (
+    <LiveListingForm />
+  ) : (
+    <DemoListingForm listing={listing} />
+  );
+}
+
+function LiveListingForm() {
+  const session = authClient.useSession();
+  if (session.isPending) return <p role="status">Carregando…</p>;
+  return <ListingFields signedIn={Boolean(session.data?.user)} />;
+}
+
+function DemoListingForm({ listing }: { listing?: Listing }) {
   const store = useDemoStore();
-  const user = currentUser(store);
+  return (
+    <ListingFields signedIn={Boolean(currentUser(store))} listing={listing} />
+  );
+}
+
+function ListingFields({
+  listing,
+  signedIn,
+}: {
+  listing?: Listing;
+  signedIn: boolean;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<ListingMode>(listing?.mode ?? "SALE");
   const [pending, setPending] = useState(false);
@@ -26,21 +57,38 @@ export function ListingForm({ listing }: { listing?: Listing }) {
       return;
     }
     try {
-      const id = saveListing(
-        {
-          title: String(data.get("title") ?? "").trim(),
-          author: String(data.get("author") ?? "").trim(),
-          description: String(data.get("description") ?? "").trim(),
-          condition: String(data.get("condition")) as Listing["condition"],
-          mode,
-          genre: String(data.get("genre") ?? "").trim(),
-          isbn: String(data.get("isbn") ?? "").trim(),
-          price: mode === "SALE" ? price : null,
-          imageUrl,
-          imageAlt: String(data.get("imageAlt") ?? "").trim(),
-        },
-        listing?.id,
-      );
+      const input = {
+        title: String(data.get("title") ?? "").trim(),
+        author: String(data.get("author") ?? "").trim(),
+        description: String(data.get("description") ?? "").trim(),
+        condition: String(data.get("condition")) as Listing["condition"],
+        mode,
+        genre: String(data.get("genre") ?? "").trim(),
+        isbn: String(data.get("isbn") ?? "").trim(),
+        price: mode === "SALE" ? price : null,
+        imageUrl,
+        imageAlt: String(data.get("imageAlt") ?? "").trim(),
+      };
+      const id = liveCheckout
+        ? (
+            await browserApi<{ id: string }>("/listings", {
+              method: "POST",
+              body: JSON.stringify({
+                title: input.title,
+                author: input.author,
+                description: input.description,
+                condition: input.condition,
+                mode: input.mode,
+                genre: input.genre || undefined,
+                isbn: input.isbn || undefined,
+                price: input.price ?? undefined,
+                images: imageUrl
+                  ? [{ url: imageUrl, altText: input.imageAlt || undefined }]
+                  : undefined,
+              }),
+            })
+          ).id
+        : saveListing(input, listing?.id);
       router.push(`/livros/${id}`);
     } catch (cause) {
       setError(
@@ -52,7 +100,7 @@ export function ListingForm({ listing }: { listing?: Listing }) {
       setPending(false);
     }
   }
-  if (!user)
+  if (!signedIn)
     return (
       <div className="state-panel">
         <h2>Entre para anunciar um livro.</h2>

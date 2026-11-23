@@ -34,6 +34,12 @@ export class NegotiationsController {
   ) {
     return this.negotiations.trade(user.id, dto);
   }
+  @Get('purchases')
+  @ApiOperation({ summary: 'Listar compras e vendas do participante' })
+  listPurchases(@CurrentUser() user: AuthenticatedUser) {
+    return this.negotiations.listPurchases(user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Consultar negociação e histórico' })
   findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {

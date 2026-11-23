@@ -15,7 +15,7 @@ O público-alvo é formado por leitores, estudantes e pessoas interessadas em ad
 - Cada anúncio terá uma modalidade: venda ou troca.
 - As vendas utilizarão o Mercado Pago em ambiente de testes/sandbox.
 - Vendedores vinculam a conta Mercado Pago por OAuth para receber pagamentos.
-- O Checkout Pro usa split 1:1 somente após a configuração e habilitação do marketplace; comissão é configurável e começa em zero.
+- O checkout na plataforma oferece Pix e cartão de crédito com Payment Brick. O split 1:1 depende da configuração e habilitação do marketplace; a comissão é configurável e começa em zero.
 - A confirmação de pagamento dependerá da confirmação recebida pelo backend, preferencialmente por webhook, e não de comprovantes enviados pelos usuários.
 - A negociação e a entrega física dos livros serão realizadas fora da plataforma; o sistema registrará seus estados e confirmações.
 
@@ -55,10 +55,11 @@ Os tokens OAuth do vendedor devem ser cifrados. Um pagamento só muda de estado 
 
 ### Comprar um livro
 
-1. O comprador inicia a compra e o sistema cria uma transação pendente no Mercado Pago.
-2. O comprador conclui o pagamento e o backend recebe e valida a confirmação do Mercado Pago.
-3. O sistema aprova a negociação e atualiza o anúncio.
-4. O vendedor registra a entrega ou conclusão da negociação.
+1. O comprador inicia a compra e escolhe Pix ou cartão de crédito no checkout do MeLivrei.
+2. O backend cria o pagamento com Mercado Pago. Para Pix, o checkout exibe QR Code e código copia e cola enquanto aguarda confirmação.
+3. O backend recebe e valida a confirmação do Mercado Pago.
+4. O sistema aprova a negociação e atualiza o anúncio.
+5. O vendedor registra a entrega ou conclusão da negociação.
 
 ### Trocar livros
 
@@ -105,7 +106,7 @@ Os tokens OAuth do vendedor devem ser cifrados. Um pagamento só muda de estado 
 | **US-002 — Acessar a conta:** como usuário cadastrado, quero entrar e sair da plataforma com segurança. (`RF-002`) | **AC-003:** credenciais válidas autenticam o usuário. **AC-004:** credenciais inválidas são recusadas sem revelar qual dado está incorreto. |
 | **US-003 — Publicar livro:** como usuário, quero criar um anúncio com os dados e fotos do livro. (`RF-003`, `RF-004`) | **AC-005:** campos obrigatórios válidos criam um anúncio disponível. **AC-006:** o proprietário pode editar ou remover seu anúncio. **AC-007:** outro usuário não pode alterá-lo. **AC-008:** campos obrigatórios ausentes impedem a publicação. |
 | **US-004 — Encontrar livro:** como visitante ou usuário, quero visualizar, pesquisar e filtrar anúncios. (`RF-005`, `RF-006`) | **AC-009:** o catálogo exibe anúncios disponíveis. **AC-010:** filtros exibem apenas resultados correspondentes. **AC-011:** a ausência de resultados é informada. |
-| **US-005 — Comprar livro:** como comprador, quero solicitar a compra e pagar pelo Mercado Pago. (`RF-007`, `RF-009`) | **AC-012:** uma compra válida cria negociação e Checkout Pro pendente. **AC-013:** webhook validado e pagamento consultado aprovam a negociação. **AC-014:** retorno do navegador ou comprovante manual não aprova a negociação. **AC-015:** recusa ou expiração encerra a tentativa e libera o anúncio. |
+| **US-005 — Comprar livro:** como comprador, quero solicitar a compra e pagar pelo Mercado Pago. (`RF-007`, `RF-009`) | **AC-012:** uma compra válida cria negociação pendente e permite pagar por Pix ou cartão de crédito no checkout da plataforma. **AC-013:** webhook validado e pagamento consultado aprovam a negociação. **AC-014:** submissão do formulário ou comprovante manual não aprova a negociação. **AC-015:** recusa ou expiração encerra a tentativa e libera o anúncio. |
 | **US-006 — Propor troca:** como interessado, quero oferecer um livro próprio em troca de outro. (`RF-008`) | **AC-016:** a proposta vincula os dois anúncios. **AC-017:** o aceite reserva os dois anúncios. **AC-018:** a recusa encerra a negociação sem indisponibilizá-los definitivamente. |
 | **US-007 — Acompanhar negociação:** como participante, quero consultar o estado e o histórico de uma negociação. (`RF-010`, `RF-011`) | **AC-019:** uma segunda negociação ativa para o mesmo anúncio é bloqueada. **AC-020:** os participantes visualizam estado atual e histórico relevante. |
 

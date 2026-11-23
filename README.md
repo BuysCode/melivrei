@@ -2,7 +2,7 @@
 
 Marketplace web de livros usados para compra, venda e troca entre usuários. A plataforma permite publicar anúncios, encontrar livros e acompanhar negociações; vendas são confirmadas por webhook validado do Mercado Pago, sem armazenamento de dados de cartão.
 
-> **Estado atual:** o frontend está pronto para o pitch em modo demonstração, com dados fictícios persistidos no navegador. A API, autenticação, banco de dados e integração Mercado Pago estão documentados; o backend oferece Checkout Pro com OAuth e webhooks, mas a interface demonstrativa ainda não consome esses serviços.
+> **Estado atual:** o frontend oferece uma prévia com dados fictícios e um modo conectado à API. No modo conectado, o Payment Brick permite pagar com Pix ou cartão de crédito dentro do MeLivrei; o backend confirma a compra por webhook do Mercado Pago.
 
 ## Stack
 
@@ -12,7 +12,7 @@ Marketplace web de livros usados para compra, venda e troca entre usuários. A p
 | Backend | NestJS 12, TypeScript, class-validator | API REST, regras de negócio, autorização e documentação Swagger. |
 | Autenticação | Better Auth, bcrypt | Contas, sessões persistidas em cookie e proteção de rotas. |
 | Dados | PostgreSQL 16, Prisma 7 | Persistência relacional de usuários, livros, anúncios e negociações. |
-| Pagamentos | Mercado Pago Checkout Pro | OAuth de vendedores, split 1:1 configurável e confirmação por webhook assinado. |
+| Pagamentos | Mercado Pago Payment Brick e Payments API | Pix e cartão de crédito na plataforma, OAuth de vendedores, split 1:1 configurável e confirmação por webhook assinado. |
 | Qualidade | Jest, Oxlint, Biome | Testes, lint e validação de qualidade. |
 | Infraestrutura | Docker e Docker Compose | Execução reproduzível de banco, API e frontend. |
 
@@ -147,7 +147,7 @@ npm run build
 | [Casos de uso](docs/uml/casos-de-uso.md) | Mostra os atores visitante, usuário, anunciante, interessado e Mercado Pago nos fluxos de conta, catálogo, anúncios, compra, troca, pagamento, negociação e histórico. |
 | [Especificação de casos de uso](docs/uml/especificacao-casos-de-uso.md) | Detalha pré-condições, fluxos principais, alternativas e pós-condições para gerenciar anúncio, comprar livro e propor troca. |
 | [Diagrama de classes](docs/uml/diagrama-de-classes.puml) | Modela as entidades do domínio — usuário, livro, anúncio, negociação, proposta de troca, pagamento e auditoria — com suas relações e estados. |
-| [Sequência de compra com Mercado Pago](docs/uml/sequencia-compra-mercado-pago.puml) | Descreve o vínculo OAuth, reserva do anúncio, preferência Checkout Pro e confirmação por webhook validado. |
+| [Sequência de compra com Mercado Pago](docs/uml/sequencia-compra-mercado-pago.puml) | Descreve o vínculo OAuth, reserva do anúncio, pagamento com Pix ou cartão e confirmação por webhook validado. |
 
 ## Fluxos principais
 
@@ -162,5 +162,5 @@ Para Docker, use a raiz do projeto como referência: [.env.example](.env.example
 ## Limitações atuais
 
 - O frontend de demonstração utiliza `localStorage`; login, pagamento e dados não são reais nesse modo.
-- O frontend continua em modo demonstração local e ainda não consome os endpoints do backend.
+- O [modo de checkout real](frontend/README.md#checkout-com-mercado-pago) consome a API para compras e vendas. A interface de trocas continua disponível na prévia local.
 - O Docker sincroniza o schema com `prisma db push` no ambiente local; ambientes persistentes devem aplicar as migrações Prisma versionadas.

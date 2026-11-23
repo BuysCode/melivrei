@@ -1,12 +1,13 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { conditionLabels, formatPrice } from "@/lib/api";
+import { conditionLabels, formatPrice, type Listing } from "@/lib/api";
 import { useDemoStore } from "@/lib/demo-store";
+import { StartPurchase } from "./live-purchase";
 import { PurchaseOrTrade } from "./purchase-or-trade";
-export function BookDetail({ id }: { id: string }) {
+export function BookDetail({ id, source }: { id: string; source?: Listing }) {
   const { listings } = useDemoStore();
-  const listing = listings.find((item) => item.id === id);
+  const listing = source ?? listings.find((item) => item.id === id);
   if (!listing)
     return (
       <div className="shell state-panel page-error">
@@ -78,7 +79,11 @@ export function BookDetail({ id }: { id: string }) {
               </div>
             )}
           </dl>
-          <PurchaseOrTrade listing={listing} />
+          {source ? (
+            <StartPurchase listing={listing} />
+          ) : (
+            <PurchaseOrTrade listing={listing} />
+          )}
         </div>
       </div>
     </div>

@@ -40,6 +40,11 @@ export function SiteFooter() {
         <nav aria-label="Navegação do rodapé">
           <Link href="/livros">Explorar livros</Link>
           <Link href="/anunciar">Anunciar um livro</Link>
+          <Link href="/termos-de-uso">Termos de Uso</Link>
+          <Link href="/politica-de-privacidade">Política de Privacidade</Link>
+          <Link href="/termos-de-servico">Termos de serviço</Link>
+          <Link href="/politica-de-reembolso">Reembolso</Link>
+          <Link href="/trocas-e-devolucoes">Trocas e devoluções</Link>
         </nav>
         <span>© {new Date().getFullYear()} MeLivrei</span>
       </div>

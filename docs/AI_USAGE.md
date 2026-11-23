@@ -76,8 +76,16 @@ A IA removeu a faixa de demonstração, o seletor de perfis, os botões de rein�
 
 ## 19. Definição e implementação do checkout na prévia
 
-A IA comparou a aprovação imediata com um checkout e recomendou manter a compra pendente até a confirmação do pagamento, conforme o PRD. Na prévia, adicionou uma página com livro, vendedor, total e botão de pagamento. Abrir o checkout mantém o estado pendente. Efetuar o pagamento na prévia registra uma aprovação local e retorna ao resumo. O fluxo real previsto usa Mercado Pago Checkout Pro e confirmação pelo backend.
+A IA comparou a aprovação imediata com um checkout e recomendou manter a compra pendente até a confirmação do pagamento, conforme o PRD. Na prévia, adicionou uma página com livro, vendedor, total e escolha entre Pix e cartão de crédito. Os campos de cartão podem ser preenchidos sem persistir os dados informados; o Pix mostra a etapa pendente, sem emitir um código real. O pagamento por cartão na prévia registra uma aprovação local e retorna ao resumo. O fluxo real inicialmente preparado com Mercado Pago Checkout Pro foi posteriormente substituído pelo Payment Brick incorporado à plataforma.
 
 ## 20. Revisão da documentação do projeto
 
 A IA revisou as referências ao provedor de pagamentos e atualizou os READMEs para descrever o checkout do Mercado Pago no backend e o checkout simulado no frontend. O roteiro da prévia passou a usar a navegação atual, incluindo o acesso por e-mail, o resumo da compra e a etapa de pagamento.
+
+## 21. Integração do Payment Brick no checkout
+
+A IA atualizou o checkout para exibir Pix e cartão de crédito na própria plataforma com o Payment Brick do Mercado Pago. O backend prepara a compra pendente, valida os dados recebidos, cria o pagamento com a comissão do marketplace usando a autorização OAuth do vendedor e devolve o QR Code e o código copia e cola do Pix. A aprovação depende do webhook validado. A interface real também passou a usar a API para catálogo, autenticação, publicação, compras e configuração da conta do vendedor.
+
+## 22. Páginas legais e preparação do pitch
+
+A IA auxiliou na criação das páginas de Termos de Uso, Política de Privacidade, Termos de serviço, Política de reembolso e Trocas e devoluções, contextualizadas para o marketplace de livros usados e trocas. Também preparou o fluxo local para gravação do pitch com capas ilustrativas originais, restauração dos dados iniciais pela conta, roteiro de gravação e ajustes de apresentação no checkout. Os campos locais de pagamento permanecem apenas na tela: não são enviados nem armazenados, e a aprovação do cartão altera somente o estado local da compra.

@@ -37,7 +37,11 @@ export type Negotiation = {
     status: string;
     offeredListing?: Listing;
   } | null;
-  payment?: { status: string; amount: string | number } | null;
+  payment?: {
+    status: string;
+    amount: string | number;
+    providerPaymentId?: string | null;
+  } | null;
   auditEvents?: { id: string; action: string; createdAt: string }[];
 };
 
@@ -107,3 +111,5 @@ export async function browserApi<T>(
   }
   return body as T;
 }
+
+export const liveCheckout = process.env.NEXT_PUBLIC_LIVE_CHECKOUT === "true";

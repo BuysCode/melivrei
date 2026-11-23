@@ -1,8 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { currentUser, removeListing, useDemoStore } from "@/lib/demo-store";
+import {
+  currentUser,
+  removeListing,
+  resetDemo,
+  useDemoStore,
+} from "@/lib/demo-store";
 import { ListingCard } from "./listing-card";
 
 const statusLabels: Record<string, string> = {
@@ -19,6 +25,7 @@ const statusLabels: Record<string, string> = {
 };
 export function MyAccount() {
   const store = useDemoStore();
+  const router = useRouter();
   const user = currentUser(store);
   const [error, setError] = useState("");
   if (!user)
@@ -143,6 +150,25 @@ export function MyAccount() {
           </Link>
         </div>
       )}
+      <div className="demo-reset">
+        <p>Quer restaurar sua conta?</p>
+        <button
+          className="text-button"
+          type="button"
+          onClick={() => {
+            if (
+              window.confirm(
+                "Isso vai restaurar sua conta para o estado inicial. Continuar?",
+              )
+            ) {
+              resetDemo();
+              router.replace("/");
+            }
+          }}
+        >
+          Restaurar conta
+        </button>
+      </div>
     </div>
   );
 }

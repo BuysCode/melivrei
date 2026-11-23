@@ -74,6 +74,8 @@ services:
       args:
         API_URL: http://api:3000
         NEXT_PUBLIC_API_URL: http://localhost:3000
+        NEXT_PUBLIC_LIVE_CHECKOUT: ${NEXT_PUBLIC_LIVE_CHECKOUT:-false}
+        NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY: ${NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY:-}
     restart: unless-stopped
     environment:
       API_URL: http://api:3000

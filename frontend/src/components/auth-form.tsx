@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { liveCheckout } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import { registerUser, signIn } from "@/lib/demo-store";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
@@ -11,15 +13,32 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const [error, setError] = useState("");
   const destination = searchParams.get("voltar");
   const next =
-    destination?.startsWith("/") && !destination.startsWith("//")
+    destination?.startsWith("/") &&
+    !destination.startsWith("//") &&
+    !destination.includes("\\")
       ? destination
       : "/minha-conta";
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     const data = new FormData(event.currentTarget);
     try {
-      if (mode === "register")
+      if (liveCheckout) {
+        const email = String(data.get("email") ?? "");
+        const password = String(data.get("password") ?? "");
+        const result =
+          mode === "register"
+            ? await authClient.signUp.email({
+                email,
+                password,
+                name: String(data.get("name") ?? ""),
+              })
+            : await authClient.signIn.email({ email, password });
+        if (result.error)
+          throw new Error(
+            result.error.message ?? "Não foi possível acessar sua conta.",
+          );
+      } else if (mode === "register")
         registerUser(
           String(data.get("name") ?? ""),
           String(data.get("email") ?? ""),
@@ -50,11 +69,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         </div>
       </div>
       <div className="form-panel">
-        <h2>
-          {mode === "login"
-            ? "Acesse sua conta"
-            : "Criar sua conta"}
-        </h2>
+        <h2>{mode === "login" ? "Acesse sua conta" : "Criar sua conta"}</h2>
         <form onSubmit={submit} className="form-stack">
           {mode === "register" && (
             <div className="field">
@@ -79,6 +94,21 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               required
             />
           </div>
+          {liveCheckout && (
+            <div className="field">
+              <label htmlFor="password">Senha</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete={
+                  mode === "register" ? "new-password" : "current-password"
+                }
+                minLength={mode === "register" ? 8 : undefined}
+                required
+              />
+            </div>
+          )}
           {error && (
             <p className="form-error" role="alert">
               {error}

@@ -10,5 +10,6 @@ export abstract class PaymentGateway {
     init_point?: string;
     sandbox_init_point?: string;
   }>;
+  abstract createPayment(accessToken: string, body: Record<string, unknown>, idempotencyKey: string): Promise<MpPayment>;
   abstract getPayment(accessToken: string, paymentId: string): Promise<MpPayment>;
 }
