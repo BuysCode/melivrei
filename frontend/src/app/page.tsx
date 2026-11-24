@@ -3,7 +3,7 @@ import { RecentListings } from "@/components/catalog";
 import { getListings } from "@/lib/api";
 
 export default async function Home() {
-  const listings = await getListings();
+  const listings = await getListings().catch(() => null);
   return (
     <>
       <section className="hero">
@@ -63,7 +63,17 @@ export default async function Home() {
             Ver todo o catálogo <span aria-hidden="true">→</span>
           </Link>
         </div>
-        <RecentListings listings={listings} />
+        {listings ? (
+          <RecentListings listings={listings} />
+        ) : (
+          <div className="state-panel" role="alert">
+            <h3>O catálogo está temporariamente indisponível.</h3>
+            <p>Tente novamente em instantes.</p>
+            <Link href="/" className="text-link">
+              Tentar novamente
+            </Link>
+          </div>
+        )}
       </section>
       <section className="section section-how">
         <div className="shell how-grid">
