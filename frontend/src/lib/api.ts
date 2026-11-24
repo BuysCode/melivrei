@@ -71,6 +71,10 @@ export async function getListings(
   return readApi<Listing[]>(`/listings${suffix}`);
 }
 
+export function getMyListings() {
+  return browserApi<Listing[]>("/listings/mine", {});
+}
+
 export function formatPrice(price: Listing["price"]) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -111,5 +115,3 @@ export async function browserApi<T>(
   }
   return body as T;
 }
-
-export const liveCheckout = process.env.NEXT_PUBLIC_LIVE_CHECKOUT === "true";

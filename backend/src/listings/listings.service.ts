@@ -67,6 +67,13 @@ export class ListingsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+  findMine(ownerId: string) {
+    return this.prisma.listing.findMany({
+      where: { ownerId },
+      include: listingInclude,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
   async findOne(id: string) {
     const listing = await this.prisma.listing.findUnique({
       where: { id },

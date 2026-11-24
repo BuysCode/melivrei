@@ -3,45 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import {
-  browserApi,
-  liveCheckout,
-  type Listing,
-  type ListingMode,
-} from "@/lib/api";
+import { browserApi, type Listing, type ListingMode } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
-import { currentUser, saveListing, useDemoStore } from "@/lib/demo-store";
 
-export function ListingForm({ listing }: { listing?: Listing }) {
-  return liveCheckout ? (
-    <LiveListingForm />
-  ) : (
-    <DemoListingForm listing={listing} />
-  );
-}
-
-function LiveListingForm() {
+export function ListingForm() {
   const session = authClient.useSession();
-  if (session.isPending) return <p role="status">Carregando…</p>;
+  if (session.isPending) return <p>Carregando…</p>;
   return <ListingFields signedIn={Boolean(session.data?.user)} />;
 }
 
-function DemoListingForm({ listing }: { listing?: Listing }) {
-  const store = useDemoStore();
-  return (
-    <ListingFields signedIn={Boolean(currentUser(store))} listing={listing} />
-  );
-}
-
-function ListingFields({
-  listing,
-  signedIn,
-}: {
-  listing?: Listing;
-  signedIn: boolean;
-}) {
+function ListingFields({ signedIn }: { signedIn: boolean }) {
   const router = useRouter();
-  const [mode, setMode] = useState<ListingMode>(listing?.mode ?? "SALE");
+  const [mode, setMode] = useState<ListingMode>("SALE");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -69,26 +42,24 @@ function ListingFields({
         imageUrl,
         imageAlt: String(data.get("imageAlt") ?? "").trim(),
       };
-      const id = liveCheckout
-        ? (
-            await browserApi<{ id: string }>("/listings", {
-              method: "POST",
-              body: JSON.stringify({
-                title: input.title,
-                author: input.author,
-                description: input.description,
-                condition: input.condition,
-                mode: input.mode,
-                genre: input.genre || undefined,
-                isbn: input.isbn || undefined,
-                price: input.price ?? undefined,
-                images: imageUrl
-                  ? [{ url: imageUrl, altText: input.imageAlt || undefined }]
-                  : undefined,
-              }),
-            })
-          ).id
-        : saveListing(input, listing?.id);
+      const id = (
+        await browserApi<{ id: string }>("/listings", {
+          method: "POST",
+          body: JSON.stringify({
+            title: input.title,
+            author: input.author,
+            description: input.description,
+            condition: input.condition,
+            mode: input.mode,
+            genre: input.genre || undefined,
+            isbn: input.isbn || undefined,
+            price: input.price ?? undefined,
+            images: imageUrl
+              ? [{ url: imageUrl, altText: input.imageAlt || undefined }]
+              : undefined,
+          }),
+        })
+      ).id;
       router.push(`/livros/${id}`);
     } catch (cause) {
       setError(
@@ -119,44 +90,21 @@ function ListingFields({
             <label htmlFor="title">
               Título <span aria-hidden="true">*</span>
             </label>
-            <input
-              id="title"
-              name="title"
-              maxLength={200}
-              required
-              defaultValue={listing?.book.title}
-            />
+            <input id="title" name="title" maxLength={200} required />
           </div>
           <div className="field">
             <label htmlFor="author">
               Autor <span aria-hidden="true">*</span>
             </label>
-            <input
-              id="author"
-              name="author"
-              maxLength={160}
-              required
-              defaultValue={listing?.book.author}
-            />
+            <input id="author" name="author" maxLength={160} required />
           </div>
           <div className="field">
             <label htmlFor="genre">Gênero</label>
-            <input
-              id="genre"
-              name="genre"
-              maxLength={100}
-              defaultValue={listing?.book.genre ?? ""}
-            />
+            <input id="genre" name="genre" maxLength={100} />
           </div>
           <div className="field">
             <label htmlFor="isbn">ISBN</label>
-            <input
-              id="isbn"
-              name="isbn"
-              maxLength={20}
-              inputMode="numeric"
-              defaultValue={listing?.book.isbn ?? ""}
-            />
+            <input id="isbn" name="isbn" maxLength={20} inputMode="numeric" />
           </div>
         </div>
         <div className="field">
@@ -170,7 +118,6 @@ function ListingFields({
             maxLength={2000}
             required
             placeholder="Conte sobre esta edição e os sinais de uso."
-            defaultValue={listing?.description}
           />
         </div>
       </fieldset>
@@ -184,7 +131,7 @@ function ListingFields({
             id="condition"
             name="condition"
             required
-            defaultValue={listing?.condition ?? "LIKE_NEW"}
+            defaultValue="LIKE_NEW"
           >
             <option value="LIKE_NEW">Como novo</option>
             <option value="GOOD">Bom estado</option>
@@ -233,7 +180,6 @@ function ListingFields({
               step="0.01"
               inputMode="decimal"
               required
-              defaultValue={listing?.price ?? ""}
             />
           </div>
         )}
@@ -251,7 +197,6 @@ function ListingFields({
             name="imageUrl"
             type="url"
             placeholder="https://…"
-            defaultValue={listing?.images[0]?.url ?? ""}
           />
         </div>
         <div className="field">
@@ -260,7 +205,6 @@ function ListingFields({
             id="imageAlt"
             name="imageAlt"
             placeholder="Ex.: Capa e lombada do exemplar"
-            defaultValue={listing?.images[0]?.altText ?? ""}
           />
         </div>
       </fieldset>
@@ -270,11 +214,7 @@ function ListingFields({
         </p>
       )}
       <button className="button" type="submit" disabled={pending}>
-        {pending
-          ? "Salvando…"
-          : listing
-            ? "Salvar alterações"
-            : "Publicar anúncio"}
+        {pending ? "Salvando…" : "Publicar anúncio"}
       </button>
     </form>
   );

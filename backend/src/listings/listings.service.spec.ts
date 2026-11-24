@@ -45,4 +45,13 @@ describe('ListingsService', () => {
       }),
     );
   });
+  it('consulta os anúncios do usuário autenticado', async () => {
+    prisma.listing.findMany.mockResolvedValue([]);
+
+    await service.findMine('user-1');
+
+    expect(prisma.listing.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { ownerId: 'user-1' } }),
+    );
+  });
 });

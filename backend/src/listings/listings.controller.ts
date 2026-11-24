@@ -32,6 +32,13 @@ export class ListingsController {
   findAll(@Query() query: ListListingsDto) {
     return this.listings.findAvailable(query);
   }
+  @Get('mine')
+  @UseGuards(BetterAuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Listar anúncios do usuário autenticado' })
+  findMine(@CurrentUser() user: AuthenticatedUser) {
+    return this.listings.findMine(user.id);
+  }
   @Get(':id') @ApiOperation({ summary: 'Consultar anúncio' }) findOne(
     @Param('id') id: string,
   ) {

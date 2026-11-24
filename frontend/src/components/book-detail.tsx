@@ -2,21 +2,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { conditionLabels, formatPrice, type Listing } from "@/lib/api";
-import { useDemoStore } from "@/lib/demo-store";
-import { StartPurchase } from "./live-purchase";
-import { PurchaseOrTrade } from "./purchase-or-trade";
-export function BookDetail({ id, source }: { id: string; source?: Listing }) {
-  const { listings } = useDemoStore();
-  const listing = source ?? listings.find((item) => item.id === id);
-  if (!listing)
-    return (
-      <div className="shell state-panel page-error">
-        <h1>Livro não encontrado.</h1>
-        <Link href="/livros" className="text-link">
-          Voltar ao catálogo
-        </Link>
-      </div>
-    );
+import { ListingActions } from "./listing-actions";
+
+export function BookDetail({ listing }: { listing: Listing }) {
   const image = listing.images[0];
   return (
     <div className="shell detail-page">
@@ -79,11 +67,7 @@ export function BookDetail({ id, source }: { id: string; source?: Listing }) {
               </div>
             )}
           </dl>
-          {source ? (
-            <StartPurchase listing={listing} />
-          ) : (
-            <PurchaseOrTrade listing={listing} />
-          )}
+          <ListingActions listing={listing} />
         </div>
       </div>
     </div>

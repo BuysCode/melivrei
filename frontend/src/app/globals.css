@@ -474,26 +474,6 @@ p {
 .footer-inner nav a:hover {
   text-decoration: underline;
 }
-.demo-reset {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  max-width: 620px;
-  margin-top: 56px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-.demo-reset p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-.demo-reset .text-button {
-  flex: none;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
 .catalog-page,
 .publish-page,
 .detail-page {
@@ -1315,9 +1295,5 @@ output.action-box {
   }
   .checkout-methods {
     grid-template-columns: 1fr;
-  }
-  .demo-reset {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }

@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { liveCheckout } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
-import { registerUser, signIn } from "@/lib/demo-store";
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
@@ -23,27 +21,20 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     setError("");
     const data = new FormData(event.currentTarget);
     try {
-      if (liveCheckout) {
-        const email = String(data.get("email") ?? "");
-        const password = String(data.get("password") ?? "");
-        const result =
-          mode === "register"
-            ? await authClient.signUp.email({
-                email,
-                password,
-                name: String(data.get("name") ?? ""),
-              })
-            : await authClient.signIn.email({ email, password });
-        if (result.error)
-          throw new Error(
-            result.error.message ?? "Não foi possível acessar sua conta.",
-          );
-      } else if (mode === "register")
-        registerUser(
-          String(data.get("name") ?? ""),
-          String(data.get("email") ?? ""),
+      const email = String(data.get("email") ?? "");
+      const password = String(data.get("password") ?? "");
+      const result =
+        mode === "register"
+          ? await authClient.signUp.email({
+              email,
+              password,
+              name: String(data.get("name") ?? ""),
+            })
+          : await authClient.signIn.email({ email, password });
+      if (result.error)
+        throw new Error(
+          result.error.message ?? "Não foi possível acessar sua conta.",
         );
-      else signIn(String(data.get("email") ?? ""));
       router.push(next);
     } catch (cause) {
       setError(
@@ -94,21 +85,19 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               required
             />
           </div>
-          {liveCheckout && (
-            <div className="field">
-              <label htmlFor="password">Senha</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete={
-                  mode === "register" ? "new-password" : "current-password"
-                }
-                minLength={mode === "register" ? 8 : undefined}
-                required
-              />
-            </div>
-          )}
+          <div className="field">
+            <label htmlFor="password">Senha</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete={
+                mode === "register" ? "new-password" : "current-password"
+              }
+              minLength={mode === "register" ? 8 : undefined}
+              required
+            />
+          </div>
           {error && (
             <p className="form-error" role="alert">
               {error}

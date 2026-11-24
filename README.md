@@ -2,13 +2,13 @@
 
 Marketplace web de livros usados para compra, venda e troca entre usuários. A plataforma permite publicar anúncios, encontrar livros e acompanhar negociações; vendas são confirmadas por webhook validado do Mercado Pago, sem armazenamento de dados de cartão.
 
-> **Estado atual:** o frontend oferece uma prévia com dados fictícios e um modo conectado à API. No modo conectado, o Payment Brick permite pagar com Pix ou cartão de crédito dentro do MeLivrei; o backend confirma a compra por webhook do Mercado Pago.
+> **Estado atual:** o frontend consome a API, autentica com Better Auth e processa Pix e cartão de crédito pelo Payment Brick do Mercado Pago. A confirmação de uma venda depende do webhook validado do provedor.
 
 ## Stack
 
 | Camada | Tecnologias | Responsabilidade |
 | --- | --- | --- |
-| Frontend | Next.js 16, React 19, TypeScript, CSS | Interface, catálogo, anúncios e fluxos demonstrativos. |
+| Frontend | Next.js 16, React 19, TypeScript, CSS | Interface, catálogo, anúncios e fluxos de compra e troca. |
 | Backend | NestJS 12, TypeScript, class-validator | API REST, regras de negócio, autorização e documentação Swagger. |
 | Autenticação | Better Auth, bcrypt | Contas, sessões persistidas em cookie e proteção de rotas. |
 | Dados | PostgreSQL 16, Prisma 7 | Persistência relacional de usuários, livros, anúncios e negociações. |
@@ -32,7 +32,7 @@ Marketplace web de livros usados para compra, venda e troca entre usuários. A p
 ├── frontend/                # Aplicação Next.js
 │   ├── src/app/             # Rotas e telas
 │   ├── src/components/      # Componentes de interface
-│   ├── src/lib/             # Cliente API, auth e dados da demo
+│   ├── src/lib/             # Cliente API e autenticação
 │   └── public/brand/        # Logotipo e símbolo usados no site
 ├── docs/                    # Requisitos, arquitetura, UML e registro de IA
 │   ├── adr/                 # Registros de decisão arquitetural
@@ -83,15 +83,15 @@ docker compose down --volumes
 
 ### Opção 2 — Frontend local
 
-O frontend pode ser executado sem backend, banco de dados ou chaves do Mercado Pago, pois usa a demonstração local.
+O frontend depende da API, do banco de dados e da chave pública do Mercado Pago.
 
 ```bash
 cd frontend
 npm ci
-npm run dev -- -p 3001
+npm run dev
 ```
 
-Abra http://localhost:3001. Na primeira visita, a prévia abre com o perfil **Ana Martins**. O [roteiro do frontend](frontend/README.md#roteiro-sugerido) mostra como navegar pelos fluxos de compra e troca.
+Configure `frontend/.env.local` com `API_URL`, `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY`; em seguida, abra http://localhost:3001.
 
 ### Opção 3 — Backend local
 
@@ -153,7 +153,6 @@ npm run build
 
 - **Venda:** o vendedor vincula a conta via OAuth, o interessado inicia a compra, o anúncio é reservado e o pagamento é confirmado pela consulta autenticada feita a partir de webhook validado. O split depende da configuração do marketplace.
 - **Troca:** o interessado oferece um anúncio próprio; o proprietário aceita ou recusa, e os dois anúncios são atualizados conforme o resultado.
-- **Demonstração:** a interface reproduz os fluxos localmente. A compra passa pelo resumo e por uma página de checkout antes da aprovação simulada.
 
 ## Variáveis de ambiente
 
@@ -161,6 +160,5 @@ Para Docker, use a raiz do projeto como referência: [.env.example](.env.example
 
 ## Limitações atuais
 
-- O frontend de demonstração utiliza `localStorage`; login, pagamento e dados não são reais nesse modo.
-- O [modo de checkout real](frontend/README.md#checkout-com-mercado-pago) consome a API para compras e vendas. A interface de trocas continua disponível na prévia local.
+- A confirmação de pagamento depende do webhook validado do Mercado Pago; enquanto ele é processado, a negociação permanece pendente.
 - O Docker sincroniza o schema com `prisma db push` no ambiente local; ambientes persistentes devem aplicar as migrações Prisma versionadas.

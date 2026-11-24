@@ -2,31 +2,20 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
-import { liveCheckout, type Listing, type ListingMode } from "@/lib/api";
+import type { Listing, ListingMode } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
-import { currentUser, useDemoStore } from "@/lib/demo-store";
 import { ListingCard } from "./listing-card";
 
-export function RecentListings({ source }: { source?: Listing[] }) {
-  const demo = useDemoStore();
-  const listings = source ?? demo.listings;
+export function RecentListings({ listings }: { listings: Listing[] }) {
   const recent = listings
     .filter((item) => item.status === "AVAILABLE")
     .slice(0, 4);
-  return (
-    <div className="listing-grid">
-      {recent.map((listing) => (
-        <ListingCard key={listing.id} listing={listing} />
-      ))}
-    </div>
-  );
+  return <ListingGrid listings={recent} />;
 }
-export function Catalog({ source }: { source?: Listing[] }) {
-  const demo = useDemoStore();
+
+export function Catalog({ listings }: { listings: Listing[] }) {
   const session = authClient.useSession();
-  const userId = liveCheckout ? session.data?.user.id : currentUser(demo)?.id;
-  const allListings = source ?? demo.listings;
-  const listings = allListings.filter((item) => item.ownerId !== userId);
+  const userId = session.data?.user.id;
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState<ListingMode | "">("");
   const [genre, setGenre] = useState("");
@@ -39,14 +28,15 @@ export function Catalog({ source }: { source?: Listing[] }) {
     condition: "",
     maxPrice: "",
   });
+  const availableListings = listings.filter((item) => item.ownerId !== userId);
   const genres = [
     ...new Set(
-      listings
+      availableListings
         .map((item) => item.book.genre)
         .filter((item): item is string => Boolean(item)),
     ),
   ].sort();
-  const results = listings.filter((item) => {
+  const results = availableListings.filter((item) => {
     if (item.status !== "AVAILABLE") return false;
     const needle = filters.search.toLocaleLowerCase("pt-BR");
     return (
@@ -62,10 +52,12 @@ export function Catalog({ source }: { source?: Listing[] }) {
           Number(item.price) <= Number(filters.maxPrice)))
     );
   });
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFilters({ search: search.trim(), mode, genre, condition, maxPrice });
   }
+
   function clear() {
     setSearch("");
     setMode("");
@@ -80,6 +72,7 @@ export function Catalog({ source }: { source?: Listing[] }) {
       maxPrice: "",
     });
   }
+
   return (
     <div className="shell catalog-page">
       <div className="page-heading">
@@ -154,14 +147,8 @@ export function Catalog({ source }: { source?: Listing[] }) {
           Anunciar um livro →
         </Link>
       </div>
-      {liveCheckout && session.isPending ? (
-        <p role="status">Carregando livros…</p>
-      ) : results.length ? (
-        <div className="listing-grid">
-          {results.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
-          ))}
-        </div>
+      {results.length ? (
+        <ListingGrid listings={results} />
       ) : (
         <div className="state-panel">
           <h3>Nenhum livro encontrado.</h3>
@@ -171,6 +158,16 @@ export function Catalog({ source }: { source?: Listing[] }) {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function ListingGrid({ listings }: { listings: Listing[] }) {
+  return (
+    <div className="listing-grid">
+      {listings.map((listing) => (
+        <ListingCard key={listing.id} listing={listing} />
+      ))}
     </div>
   );
 }

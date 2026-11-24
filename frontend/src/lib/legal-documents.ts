@@ -92,7 +92,6 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
           "Negociações: participantes, anúncios envolvidos, propostas, estados e histórico de eventos, para registrar e acompanhar compra ou troca.",
           "Pagamentos: identificadores e metadados necessários para acompanhar a transação e confirmar seu estado; o MeLivrei não armazena o número completo nem o código de segurança do cartão.",
           "Conta de recebimento do anunciante: dados e tokens de autorização Mercado Pago necessários à integração. Tokens são tratados com proteção técnica, incluindo cifragem quando armazenados pelo serviço.",
-          "Demonstração local: no modo de prévia, dados fictícios e ações da demonstração podem ficar no armazenamento local do navegador. Nesse modo, o acesso não equivale a uma conta real nem os pagamentos são processados.",
         ],
       },
       {
@@ -125,7 +124,7 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
       {
         title: "7. Cookies, sessão e crianças",
         paragraphs: [
-          "O serviço pode usar armazenamento técnico necessário para manter a sessão e funcionalidades solicitadas. A prévia local usa armazenamento do navegador para conservar os dados demonstrativos. O projeto não descreve uso de cookies publicitários ou rastreadores de terceiros; se recursos de análise ou publicidade forem adicionados, esta política e os controles de consentimento serão atualizados antes de seu uso.",
+          "O serviço usa armazenamento técnico necessário para manter a sessão e funcionalidades solicitadas. O projeto não descreve uso de cookies publicitários ou rastreadores de terceiros; se recursos de análise ou publicidade forem adicionados, esta política e os controles de consentimento serão atualizados antes de seu uso.",
           "O marketplace não é direcionado a crianças. Menores devem utilizar a plataforma com orientação de responsável legal. Se identificarmos tratamento irregular de dados de criança ou adolescente, adotaremos as medidas cabíveis conforme a legislação.",
         ],
       },

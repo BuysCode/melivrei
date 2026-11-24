@@ -2,18 +2,36 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { browserApi } from "@/lib/api";
+import { browserApi, getMyListings, type Listing } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { ListingCard } from "./listing-card";
 
-type PurchaseRow = {
+type NegotiationRow = {
   id: string;
+  type: "SALE" | "TRADE";
+  status: string;
   listing: { ownerId: string; book: { title: string } };
+};
+
+const statusLabels: Record<string, string> = {
+  AVAILABLE: "Disponível",
+  RESERVED: "Reservado",
+  IN_NEGOTIATION: "Em negociação",
+  COMPLETED: "Concluído",
+  CANCELLED: "Cancelado",
+  PENDING: "Aguardando resposta",
+  PENDING_PAYMENT: "Aguardando pagamento",
+  APPROVED: "Aprovada",
+  REJECTED: "Recusada",
 };
 
 export function LivePurchaseAccount() {
   const session = authClient.useSession();
   const userId = session.data?.user.id;
-  const [purchases, setPurchases] = useState<PurchaseRow[] | null>(null);
+  const [negotiations, setNegotiations] = useState<NegotiationRow[] | null>(
+    null,
+  );
+  const [listings, setListings] = useState<Listing[] | null>(null);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -22,13 +40,21 @@ export function LivePurchaseAccount() {
     if (!userId) return;
     const controller = new AbortController();
     const options = { signal: controller.signal };
-    browserApi<PurchaseRow[]>("/negotiations/purchases", options)
+    browserApi<NegotiationRow[]>("/negotiations/purchases", options)
       .then((rows) => {
-        if (!controller.signal.aborted) setPurchases(rows);
+        if (!controller.signal.aborted) setNegotiations(rows);
       })
       .catch(() => {
         if (!controller.signal.aborted)
           setError("Não foi possível carregar suas compras e vendas.");
+      });
+    getMyListings()
+      .then((rows) => {
+        if (!controller.signal.aborted) setListings(rows);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setError("Não foi possível carregar seus anúncios.");
       });
     browserApi<{ connected: boolean }>(
       "/payments/mercadopago/connection",
@@ -63,11 +89,7 @@ export function LivePurchaseAccount() {
   }
 
   if (session.isPending)
-    return (
-      <div className="shell account-page" role="status">
-        Carregando…
-      </div>
-    );
+    return <div className="shell account-page">Carregando…</div>;
   if (!userId) {
     return (
       <div className="shell account-page">
@@ -97,34 +119,73 @@ export function LivePurchaseAccount() {
             {busy ? "Conectando…" : "Conectar Mercado Pago"}
           </button>
         )}
-        {connected === null && !error && (
-          <p role="status">Consultando conexão…</p>
-        )}
+        {connected === null && !error && <p>Consultando conexão…</p>}
       </section>
       <div className="account-section-heading">
-        <h2>Minhas compras e vendas</h2>
+        <h2>Meus anúncios</h2>
+        <Link href="/anunciar" className="button button-small">
+          Anunciar livro
+        </Link>
       </div>
       {error && (
         <p className="form-error" role="alert">
           {error}
         </p>
       )}
-      {purchases?.length ? (
+      {listings?.length ? (
+        <div className="account-listings">
+          {listings.map((listing) => (
+            <div className="account-listing" key={listing.id}>
+              <ListingCard listing={listing} />
+              <div className="account-listing-actions">
+                <span className="status">
+                  {statusLabels[listing.status] ?? listing.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : listings ? (
+        <div className="state-panel">
+          <h3>Você ainda não anunciou livros.</h3>
+          <Link href="/anunciar" className="text-link">
+            Publicar o primeiro
+          </Link>
+        </div>
+      ) : null}
+      <div className="account-section-heading">
+        <h2>Minhas negociações</h2>
+      </div>
+      {negotiations?.length ? (
         <div className="negotiation-list">
-          {purchases.map(({ id, listing }) => (
+          {negotiations.map(({ id, listing, status, type }) => (
             <Link
               className="negotiation-row"
               key={id}
               href={`/negociacoes/${id}`}
             >
-              <strong>{listing.book.title}</strong>
-              <span>{listing.ownerId === userId ? "Venda" : "Compra"}</span>
+              <span>
+                <strong>{listing.book.title}</strong>
+                <small>
+                  {type === "TRADE"
+                    ? "Troca"
+                    : listing.ownerId === userId
+                      ? "Venda"
+                      : "Compra"}
+                </small>
+              </span>
+              <span className="status">{statusLabels[status] ?? status}</span>
             </Link>
           ))}
         </div>
-      ) : (
-        purchases && <p>Você ainda não tem compras ou vendas.</p>
-      )}
+      ) : negotiations ? (
+        <div className="state-panel">
+          <h3>Nenhuma negociação ainda.</h3>
+          <Link href="/livros" className="text-link">
+            Explorar o catálogo
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

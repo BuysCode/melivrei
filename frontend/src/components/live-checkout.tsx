@@ -1,9 +1,10 @@
 "use client";
 
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
+import type { IPaymentFormData } from "@mercadopago/sdk-react/esm/bricks/payment/type";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { IPaymentFormData } from "@mercadopago/sdk-react/esm/bricks/payment/type";
 import { browserApi, formatPrice, type Negotiation } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 
@@ -18,7 +19,7 @@ const paymentLabels: Record<string, string> = {
   IN_DISPUTE: "Pagamento em análise",
 };
 
-type Payment = {
+type CheckoutPayment = {
   amount: string | number;
   status: string;
   payer: { email: string };
@@ -28,8 +29,8 @@ type PixData = { qrCode: string | null; qrCodeBase64: string | null };
 
 type Purchase = Omit<Negotiation, "payment"> & {
   payment:
-    | (Omit<Payment, "payer" | "submitted"> & {
-        payer?: Payment["payer"];
+    | (Omit<CheckoutPayment, "payer" | "submitted"> & {
+        payer?: CheckoutPayment["payer"];
         submitted?: boolean;
         providerPaymentId?: string | null;
         paymentMethodId?: string | null;
@@ -38,13 +39,116 @@ type Purchase = Omit<Negotiation, "payment"> & {
 };
 const pendingStatus = (status: string) => status === "PENDING_PAYMENT";
 
+function TradeNegotiation({
+  negotiation,
+  userId,
+  onChanged,
+}: {
+  negotiation: Purchase;
+  userId: string;
+  onChanged: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const offer = negotiation.tradeOffer;
+  const canDecide =
+    negotiation.listing.ownerId === userId && negotiation.status === "PENDING";
+
+  async function decide(action: "accept" | "reject") {
+    setBusy(true);
+    setError("");
+    try {
+      await browserApi(
+        `/negotiations/${encodeURIComponent(negotiation.id)}/${action}`,
+        { method: "PATCH" },
+      );
+      onChanged();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível responder à proposta.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="shell negotiation-page">
+      <Link className="quiet-link" href="/minha-conta">
+        ← Minhas negociações
+      </Link>
+      <h1>Proposta de troca</h1>
+      <div className="checkout-grid">
+        <section className="form-panel form-stack">
+          <div>
+            <h2>{negotiation.listing.book.title}</h2>
+            <span className="status">
+              {paymentLabels[negotiation.status] ??
+                (negotiation.status === "PENDING"
+                  ? "Aguardando resposta"
+                  : negotiation.status)}
+            </span>
+          </div>
+          {offer?.offeredListing && (
+            <p>
+              Livro oferecido:{" "}
+              <strong>{offer.offeredListing.book.title}</strong>, de{" "}
+              {offer.offeredListing.book.author}.
+            </p>
+          )}
+          {offer?.message && <p>Mensagem: {offer.message}</p>}
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          {canDecide ? (
+            <div className="hero-actions">
+              <button
+                className="button"
+                type="button"
+                disabled={busy}
+                onClick={() => void decide("accept")}
+              >
+                {busy ? "Respondendo…" : "Aceitar troca"}
+              </button>
+              <button
+                className="text-button"
+                type="button"
+                disabled={busy}
+                onClick={() => void decide("reject")}
+              >
+                Recusar
+              </button>
+            </div>
+          ) : (
+            <p>
+              {negotiation.status === "PENDING"
+                ? "Aguardando a resposta do proprietário."
+                : "A proposta foi respondida."}
+            </p>
+          )}
+        </section>
+        <aside className="form-panel">
+          <h2>Livro solicitado</h2>
+          <strong>{negotiation.listing.book.title}</strong>
+          <p>{negotiation.listing.book.author}</p>
+          <p>Publicado por {negotiation.listing.owner.name}</p>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function PaymentForm({
   payment,
   negotiationId,
   onError,
   onSubmitted,
 }: {
-  payment: Payment;
+  payment: CheckoutPayment & { payer: { email: string } };
   negotiationId: string;
   onError: (message: string) => void;
   onSubmitted: (pix: PixData | null) => void;
@@ -114,9 +218,7 @@ function PaymentForm({
           locale="pt-BR"
         />
       )}
-      {publicKey && !ready && !failed && (
-        <p role="status">Carregando Mercado Pago…</p>
-      )}
+      {publicKey && !ready && !failed && <p>Carregando Mercado Pago…</p>}
       {failed && (
         <p className="form-error" role="alert">
           O formulário de pagamento não carregou. Atualize a página e tente
@@ -153,9 +255,12 @@ export function LiveCheckout({
   useEffect(() => {
     if (!userId) return;
     const controller = new AbortController();
-    browserApi<Purchase>(`/negotiations/${encodeURIComponent(id)}`, {
-      signal: controller.signal,
-    })
+    browserApi<Purchase>(
+      `/negotiations/${encodeURIComponent(id)}?refresh=${attempt}`,
+      {
+        signal: controller.signal,
+      },
+    )
       .then((data) => {
         if (!controller.signal.aborted) setPurchase(data);
       })
@@ -175,7 +280,7 @@ export function LiveCheckout({
     )
       return;
     setPreparing(true);
-    browserApi<Payment>(
+    browserApi<CheckoutPayment>(
       `/payments/negotiations/${encodeURIComponent(id)}/checkout`,
       { method: "POST" },
     )
@@ -184,7 +289,7 @@ export function LiveCheckout({
       )
       .catch((cause: Error) => setError(cause.message))
       .finally(() => setPreparing(false));
-  }, [checkout, id, userId, purchase, attempt]);
+  }, [checkout, id, userId, purchase]);
 
   const pixPaymentId =
     purchase?.payment?.paymentMethodId === "pix"
@@ -216,11 +321,7 @@ export function LiveCheckout({
   }
 
   if (session.isPending || (userId && !purchase && !error)) {
-    return (
-      <div className="shell negotiation-page" role="status">
-        Carregando compra…
-      </div>
-    );
+    return <div className="shell negotiation-page">Carregando compra…</div>;
   }
 
   if (!userId) {
@@ -237,7 +338,7 @@ export function LiveCheckout({
     );
   }
 
-  if (!purchase || purchase.type !== "SALE") {
+  if (!purchase) {
     return (
       <div className="shell negotiation-page">
         <h1>Compra indisponível</h1>
@@ -251,6 +352,26 @@ export function LiveCheckout({
             Tentar novamente
           </button>
         )}
+        <Link className="text-link" href="/livros">
+          Voltar ao catálogo
+        </Link>
+      </div>
+    );
+  }
+
+  if (purchase.type === "TRADE")
+    return (
+      <TradeNegotiation
+        negotiation={purchase}
+        userId={userId}
+        onChanged={refresh}
+      />
+    );
+
+  if (purchase.type !== "SALE") {
+    return (
+      <div className="shell negotiation-page">
+        <h1>Negociação indisponível</h1>
         <Link className="text-link" href="/livros">
           Voltar ao catálogo
         </Link>
@@ -302,10 +423,13 @@ export function LiveCheckout({
                     banco.
                   </p>
                   {pix.qrCodeBase64 && (
-                    <img
+                    <Image
                       className="checkout-pix-qr"
                       src={`data:image/png;base64,${pix.qrCodeBase64}`}
                       alt="QR Code do pagamento Pix"
+                      width={240}
+                      height={240}
+                      unoptimized
                     />
                   )}
                   <label htmlFor="pix-copy-code">Pix copia e cola</label>
@@ -318,15 +442,16 @@ export function LiveCheckout({
                   <button
                     className="button"
                     type="button"
-                    onClick={() =>
-                      void navigator.clipboard.writeText(pix.qrCode!)
-                    }
+                    onClick={() => {
+                      if (pix.qrCode)
+                        void navigator.clipboard.writeText(pix.qrCode);
+                    }}
                   >
                     Copiar código Pix
                   </button>
                 </div>
               ) : (
-                <p role="status">
+                <p>
                   Pagamento enviado. Aguardando confirmação do Mercado Pago.
                 </p>
               )}
@@ -343,7 +468,7 @@ export function LiveCheckout({
                 key={id}
                 payment={{
                   ...payment,
-                  payer: payment.payer!,
+                  payer: payment.payer,
                   submitted: paymentSubmitted,
                 }}
                 negotiationId={id}
@@ -351,7 +476,7 @@ export function LiveCheckout({
                 onSubmitted={completePayment}
               />
             ) : (
-              <p role="status">
+              <p>
                 {preparing
                   ? "Carregando formulário de pagamento…"
                   : "O formulário de pagamento ficará disponível em instantes."}

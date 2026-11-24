@@ -152,10 +152,14 @@ export class NegotiationsService {
   }
   listPurchases(userId: string) {
     return this.prisma.negotiation.findMany({
-      where: { type: NegotiationType.SALE, participants: { some: { userId } } },
+      where: { participants: { some: { userId } } },
       select: {
         id: true,
-        listing: { select: { ownerId: true, book: { select: { title: true } } } },
+        type: true,
+        status: true,
+        listing: {
+          select: { ownerId: true, book: { select: { title: true } } },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -165,8 +169,19 @@ export class NegotiationsService {
     const negotiation = await this.prisma.negotiation.findFirst({
       where: { id, participants: { some: { userId } } },
       include: {
-        listing: { include: { book: true, owner: { select: { id: true, name: true } } } },
-        tradeOffer: true,
+        listing: {
+          include: { book: true, owner: { select: { id: true, name: true } } },
+        },
+        tradeOffer: {
+          include: {
+            offeredListing: {
+              include: {
+                book: true,
+                owner: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
         payment: true,
         auditEvents: { orderBy: { createdAt: 'desc' } },
       },
