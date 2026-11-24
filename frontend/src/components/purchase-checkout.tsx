@@ -162,13 +162,13 @@ export function PurchaseCheckout({ id }: { id: string }) {
                   inputMode="numeric"
                   autoComplete="cc-number"
                   placeholder="0000 0000 0000 0000"
-                  maxLength={23}
+                  maxLength={19}
                   value={cardNumber}
                   onChange={(event) =>
                     setCardNumber(
                       event.target.value
                         .replace(/\D/g, "")
-                        .slice(0, 19)
+                        .slice(0, 16)
                         .replace(/(.{4})/g, "$1 ")
                         .trim(),
                     )
