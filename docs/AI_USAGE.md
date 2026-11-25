@@ -89,3 +89,7 @@ A IA atualizou o checkout para exibir Pix e cartão de crédito na própria plat
 ## 22. Páginas legais e preparação do pitch
 
 A IA auxiliou na criação das páginas de Termos de Uso, Política de Privacidade, Termos de serviço, Política de reembolso e Trocas e devoluções, contextualizadas para o marketplace de livros usados e trocas. Também preparou o fluxo local para gravação do pitch com capas ilustrativas originais, restauração dos dados iniciais pela conta, roteiro de gravação e ajustes de apresentação no checkout. Os campos locais de pagamento permanecem apenas na tela: não são enviados nem armazenados, e a aprovação do cartão altera somente o estado local da compra.
+
+## 23. Documentação do backend com TSDoc e Swagger/OpenAPI
+
+A IA (Codex) documentou o código do backend com comentários TSDoc, equivalente ao Javadoc no ecossistema TypeScript, cobrindo módulos, DTOs, controladores, serviços, autenticação, persistência e integração de pagamentos. Também aprimorou a configuração Swagger/OpenAPI em `/docs`, incluindo o servidor com prefixo `/api`, a descrição da autenticação por cookie Better Auth e o payload tokenizado do Payment Brick. A alteração foi compilada, verificada pelo linter e validada pela suíte de testes do backend.
