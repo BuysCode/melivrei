@@ -5,4 +5,5 @@ import { BetterAuthGuard } from './better-auth.guard.js';
   providers: [BetterAuthGuard],
   exports: [BetterAuthGuard],
 })
+/** Disponibiliza os componentes de autenticação e autorização da aplicação. */
 export class AuthModule {}

@@ -16,8 +16,14 @@ const listingInclude = {
 } satisfies Prisma.ListingInclude;
 
 @Injectable()
+/** Implementa as regras de negócio de publicação e consulta de anúncios. */
 export class ListingsService {
   constructor(private readonly prisma: PrismaService) {}
+  /**
+   * Publica um anúncio pertencente ao usuário informado.
+   *
+   * @throws {BadRequestException} Quando uma venda não informa preço.
+   */
   async create(ownerId: string, dto: CreateListingDto) {
     if (dto.mode === 'SALE' && dto.price === undefined)
       throw new BadRequestException(
@@ -48,6 +54,7 @@ export class ListingsService {
       include: listingInclude,
     });
   }
+  /** Retorna anúncios disponíveis, opcionalmente filtrados por texto e modalidade. */
   findAvailable(query: ListListingsDto) {
     const search = query.search?.trim();
     return this.prisma.listing.findMany({
@@ -67,6 +74,7 @@ export class ListingsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+  /** Retorna todos os anúncios publicados pelo proprietário informado. */
   findMine(ownerId: string) {
     return this.prisma.listing.findMany({
       where: { ownerId },
@@ -74,6 +82,11 @@ export class ListingsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+  /**
+   * Consulta um anúncio pelo identificador.
+   *
+   * @throws {NotFoundException} Quando o anúncio não existe.
+   */
   async findOne(id: string) {
     const listing = await this.prisma.listing.findUnique({
       where: { id },
@@ -82,6 +95,12 @@ export class ListingsService {
     if (!listing) throw new NotFoundException('Anúncio não encontrado.');
     return listing;
   }
+  /**
+   * Cancela um anúncio do seu proprietário, desde que não exista negociação ativa.
+   *
+   * @throws {ForbiddenException} Quando o usuário não é o proprietário.
+   * @throws {BadRequestException} Quando o anúncio está reservado ou em negociação.
+   */
   async remove(id: string, ownerId: string) {
     const listing = await this.findOne(id);
     if (listing.ownerId !== ownerId)

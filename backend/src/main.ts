@@ -6,7 +6,13 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth.js';
 import { AppModule } from './app.module.js';
 
-async function bootstrap() {
+/**
+ * Inicializa o servidor HTTP, a validação global, a autenticação e a
+ * documentação interativa da API.
+ *
+ * @returns Uma promessa resolvida após o NestJS começar a escutar a porta configurada.
+ */
+async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
     rawBody: true,
@@ -31,11 +37,23 @@ async function bootstrap() {
   );
   const swagger = new DocumentBuilder()
     .setTitle('MeLivrei API')
-    .setDescription('Marketplace de compra, venda e troca de livros usados.')
+    .setDescription(
+      'API do marketplace de compra, venda e troca de livros usados. ' +
+        'Rotas protegidas exigem o cookie de sessão do Better Auth.',
+    )
     .setVersion('1.0')
-    .addCookieAuth('better-auth.session_token')
+    .addServer('/api', 'Servidor atual')
+    .addCookieAuth('better-auth.session_token', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'better-auth.session_token',
+      description: 'Cookie de sessão emitido pelo Better Auth.',
+    })
     .build();
-  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swagger));
+  const document = SwaggerModule.createDocument(app, swagger);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: { persistAuthorization: true },
+  });
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

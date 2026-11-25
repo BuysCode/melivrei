@@ -24,11 +24,13 @@ import { ListingsService } from './listings.service.js';
 
 @ApiTags('Anúncios')
 @Controller('listings')
+/** Expõe as rotas HTTP do catálogo e da gestão de anúncios. */
 export class ListingsController {
   constructor(private readonly listings: ListingsService) {}
   @Get()
   @ApiOperation({ summary: 'Listar anúncios disponíveis' })
   @ApiOkResponse({ description: 'Catálogo público.' })
+  /** Lista anúncios disponíveis para visitantes e usuários autenticados. */
   findAll(@Query() query: ListListingsDto) {
     return this.listings.findAvailable(query);
   }
@@ -36,12 +38,13 @@ export class ListingsController {
   @UseGuards(BetterAuthGuard)
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Listar anúncios do usuário autenticado' })
+  /** Lista os anúncios pertencentes à sessão autenticada. */
   findMine(@CurrentUser() user: AuthenticatedUser) {
     return this.listings.findMine(user.id);
   }
-  @Get(':id') @ApiOperation({ summary: 'Consultar anúncio' }) findOne(
-    @Param('id') id: string,
-  ) {
+  @Get(':id')
+  @ApiOperation({ summary: 'Consultar anúncio' })
+  /** Consulta os detalhes de um anúncio. */ findOne(@Param('id') id: string) {
     return this.listings.findOne(id);
   }
   @Post()
@@ -49,6 +52,7 @@ export class ListingsController {
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Publicar anúncio' })
   @ApiCreatedResponse({ description: 'Anúncio publicado.' })
+  /** Publica um anúncio em nome do usuário autenticado. */
   create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateListingDto,
@@ -59,6 +63,7 @@ export class ListingsController {
   @UseGuards(BetterAuthGuard)
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Cancelar anúncio próprio' })
+  /** Cancela um anúncio pertencente ao usuário autenticado. */
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.listings.remove(id, user.id);
   }

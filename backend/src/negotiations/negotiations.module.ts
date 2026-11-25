@@ -8,4 +8,5 @@ import { NegotiationsService } from './negotiations.service.js';
   controllers: [NegotiationsController],
   providers: [NegotiationsService],
 })
+/** Agrupa os fluxos de compra, troca e decisão de propostas. */
 export class NegotiationsModule {}

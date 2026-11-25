@@ -16,4 +16,5 @@ import { PaymentsModule } from './payments/payments.module.js';
     PaymentsModule,
   ],
 })
+/** Raiz da composição dos módulos da aplicação MeLivrei. */
 export class AppModule {}

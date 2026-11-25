@@ -6,6 +6,7 @@ import { createPrismaAdapter } from './database/prisma-adapter.js';
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
+/** Instância Better Auth usada pelas rotas de sessão e pelo guarda de autenticação. */
 export const auth = betterAuth({
   appName: 'MeLivrei',
   baseURL: process.env.BETTER_AUTH_URL,

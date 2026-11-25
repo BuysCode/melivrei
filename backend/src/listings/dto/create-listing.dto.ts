@@ -13,10 +13,12 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/** Representa uma imagem vinculada ao anúncio durante sua criação. */
 class ListingImageDto {
   @ApiProperty() @IsUrl() url!: string;
   @ApiPropertyOptional() @IsOptional() @IsString() altText?: string;
 }
+/** Dados validados para publicar um livro para venda ou troca. */
 export class CreateListingDto {
   @ApiProperty() @IsString() @MaxLength(200) title!: string;
   @ApiProperty() @IsString() @MaxLength(160) author!: string;

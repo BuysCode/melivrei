@@ -7,7 +7,12 @@ import { PaymentGateway } from './payment-gateway.js';
 @Module({
   imports: [AuthModule],
   controllers: [PaymentsController],
-  providers: [PaymentsService, MercadoPagoGateway, { provide: PaymentGateway, useExisting: MercadoPagoGateway }],
+  providers: [
+    PaymentsService,
+    MercadoPagoGateway,
+    { provide: PaymentGateway, useExisting: MercadoPagoGateway },
+  ],
   exports: [PaymentsService],
 })
+/** Agrupa a integração de pagamentos e o gateway Mercado Pago. */
 export class PaymentsModule {}

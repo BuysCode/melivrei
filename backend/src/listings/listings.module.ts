@@ -8,4 +8,5 @@ import { ListingsService } from './listings.service.js';
   providers: [ListingsService],
   exports: [ListingsService],
 })
+/** Agrupa os recursos de catálogo e anúncios de livros. */
 export class ListingsModule {}

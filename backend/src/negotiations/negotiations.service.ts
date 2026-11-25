@@ -18,11 +18,17 @@ import {
 } from './dto/create-negotiation.dto.js';
 
 @Injectable()
+/** Centraliza as regras transacionais para compras e propostas de troca. */
 export class NegotiationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly payments: PaymentsService,
   ) {}
+  /**
+   * Reserva um anúncio de venda e cria a negociação de compra.
+   *
+   * @throws {BadRequestException} Quando o comprador tenta comprar o próprio anúncio ou ele já não está disponível.
+   */
   async purchase(buyerId: string, dto: CreatePurchaseDto) {
     const listing = await this.availableListing(
       dto.listingId,
@@ -61,6 +67,11 @@ export class NegotiationsService {
     const payment = await this.payments.createForNegotiation(negotiation.id);
     return { ...negotiation, payment };
   }
+  /**
+   * Cria uma proposta de troca e marca ambos os anúncios como em negociação.
+   *
+   * @throws {ForbiddenException} Quando a oferta não envolve um anúncio próprio e outro de terceiro.
+   */
   async trade(requesterId: string, dto: CreateTradeDto) {
     if (dto.listingId === dto.offeredListingId)
       throw new BadRequestException('Os anúncios devem ser distintos.');
@@ -104,6 +115,11 @@ export class NegotiationsService {
       });
     });
   }
+  /**
+   * Aceita ou recusa uma proposta de troca feita para o proprietário do anúncio.
+   *
+   * @throws {ForbiddenException} Quando quem decide não é o proprietário.
+   */
   async decide(ownerId: string, id: string, accept: boolean) {
     const negotiation = await this.prisma.negotiation.findUnique({
       where: { id },
@@ -150,6 +166,7 @@ export class NegotiationsService {
       });
     });
   }
+  /** Lista negociações de venda das quais o usuário participa. */
   listPurchases(userId: string) {
     return this.prisma.negotiation.findMany({
       where: { participants: { some: { userId } } },
@@ -165,6 +182,11 @@ export class NegotiationsService {
     });
   }
 
+  /**
+   * Retorna uma negociação apenas para um de seus participantes.
+   *
+   * @throws {NotFoundException} Quando a negociação não existe ou não pertence ao usuário.
+   */
   async findOneForParticipant(userId: string, id: string) {
     const negotiation = await this.prisma.negotiation.findFirst({
       where: { id, participants: { some: { userId } } },
@@ -189,6 +211,7 @@ export class NegotiationsService {
     if (!negotiation) throw new NotFoundException('Negociação não encontrada.');
     return negotiation;
   }
+  /** Busca um anúncio disponível e, se informado, compatível com a modalidade. */
   private async availableListing(id: string, mode?: ListingMode) {
     const listing = await this.prisma.listing.findUnique({ where: { id } });
     if (

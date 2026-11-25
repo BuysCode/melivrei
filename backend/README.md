@@ -17,6 +17,19 @@ npm run start:dev
 
 Swagger: `http://localhost:3000/docs`; prefixo da API: `/api`.
 
+## Documentação de código e API
+
+O backend usa **TSDoc**, a convenção de comentários de documentação mais próxima
+do Javadoc no ecossistema TypeScript. Os comentários `/** ... */` descrevem
+classes, DTOs, contratos e regras de negócio, incluindo efeitos e exceções
+relevantes. Eles ficam junto ao código-fonte para facilitar manutenção e revisão.
+
+A documentação HTTP é disponibilizada com **Swagger/OpenAPI** em `/docs`. A UI
+lista rotas, filtros, DTOs e requisitos de autenticação. Para testar uma rota
+protegida pelo navegador, autentique-se no mesmo host do backend: o cookie
+`better-auth.session_token` será enviado pela sessão. O servidor OpenAPI já
+aponta para o prefixo `/api`, portanto o **Try it out** usa as URLs corretas.
+
 O Compose na raiz ainda sincroniza schema com `prisma db push` para desenvolvimento. Ambientes persistentes devem aplicar migrações versionadas.
 
 Em banco preexistente criado pelo `db push`, registre a migração de baseline uma vez (`npx prisma migrate resolve --applied 20261118000000_initial`) e então execute `npx prisma migrate deploy` para aplicar a migração Mercado Pago. Em banco vazio, `npx prisma migrate deploy` aplica baseline e integração em ordem.
