@@ -6,7 +6,6 @@ flowchart LR
     usuario((Usuário))
     anunciante((Anunciante))
     interessado((Interessado))
-    mercadoPago[Mercado Pago]
 
     subgraph sistema["MeLivrei — Marketplace"]
         UC01((Criar conta))
@@ -14,11 +13,13 @@ flowchart LR
         UC03((Gerenciar anúncio))
         UC04((Consultar catálogo))
         UC05((Pesquisar livros))
-        UC06((Comprar livro))
+        UC06((Propor compra))
         UC07((Propor troca))
-        UC08((Confirmar pagamento))
         UC09((Acompanhar negociação))
         UC10((Consultar histórico))
+        UC11((Aceitar ou recusar proposta))
+        UC12((Cadastrar WhatsApp))
+        UC13((Entrar em contato após aceite))
     end
 
     visitante --> UC01
@@ -37,18 +38,18 @@ flowchart LR
     interessado --> UC06
     interessado --> UC07
     interessado --> UC09
-    UC06 -.->|inclui| UC08
-    mercadoPago --> UC08
+
+    anunciante --> UC11
+    anunciante --> UC12
+    interessado --> UC13
 
     classDef actor fill:#e8f0fe,stroke:#356ae6,color:#172554,stroke-width:1px;
-    classDef external fill:#fff7ed,stroke:#c2410c,color:#431407,stroke-width:1px;
     class visitante,usuario,anunciante,interessado actor;
-    class mercadoPago external;
 ```
 
 ## Observações
 
 - O diagrama representa o escopo de venda e troca definido no PRD.
-- `inclui` representa um comportamento necessário dentro do fluxo principal.
 - Os papéis `Anunciante` e `Interessado` representam funções que um mesmo usuário pode exercer em diferentes negociações.
-- O Mercado Pago é o sistema externo responsável pela confirmação de pagamentos; os dados completos do cartão não pertencem ao sistema.
+
+- UC-08 foi retirado do escopo. O aceite em UC-11 libera UC-13 somente ao interessado participante; conversa e pagamentos ocorrem externamente.

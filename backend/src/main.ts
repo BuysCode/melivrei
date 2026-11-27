@@ -15,7 +15,6 @@ import { AppModule } from './app.module.js';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
-    rawBody: true,
   });
   app
     .getHttpAdapter()

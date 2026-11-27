@@ -1,8 +1,8 @@
 # MeLivrei
 
-Marketplace web de livros usados para compra, venda e troca entre usuários. A plataforma permite publicar anúncios, encontrar livros e acompanhar negociações; vendas são confirmadas por webhook validado do Mercado Pago, sem armazenamento de dados de cartão.
+Marketplace web de livros usados para compra, venda e troca entre usuários. A plataforma permite publicar anúncios, encontrar livros e acompanhar negociações; o anunciante aceita ou recusa propostas, e o contato pelo WhatsApp é liberado ao interessado somente após o aceite. Conversa, pagamento e entrega são combinados externamente.
 
-> **Estado atual:** o frontend consome a API, autentica com Better Auth e processa Pix e cartão de crédito pelo Payment Brick do Mercado Pago. A confirmação de uma venda depende do webhook validado do provedor.
+> **Estado atual:** o frontend consome a API e autentica com Better Auth. Vendas e trocas usam propostas, decisão do anunciante e contato externo condicionado ao aceite.
 
 ## Stack
 
@@ -12,7 +12,6 @@ Marketplace web de livros usados para compra, venda e troca entre usuários. A p
 | Backend | NestJS 12, TypeScript, class-validator | API REST, regras de negócio, autorização e documentação Swagger. |
 | Autenticação | Better Auth, bcrypt | Contas, sessões persistidas em cookie e proteção de rotas. |
 | Dados | PostgreSQL 16, Prisma 7 | Persistência relacional de usuários, livros, anúncios e negociações. |
-| Pagamentos | Mercado Pago Payment Brick e Payments API | Pix e cartão de crédito na plataforma, OAuth de vendedores, split 1:1 configurável e confirmação por webhook assinado. |
 | Qualidade | Jest, Oxlint, Biome | Testes, lint e validação de qualidade. |
 | Infraestrutura | Docker e Docker Compose | Execução reproduzível de banco, API e frontend. |
 
@@ -26,8 +25,7 @@ Marketplace web de livros usados para compra, venda e troca entre usuários. A p
 │   │   ├── auth/            # Better Auth, guardas e usuário atual
 │   │   ├── database/        # Prisma e conexão PostgreSQL
 │   │   ├── listings/        # Catálogo e anúncios
-│   │   ├── negotiations/    # Compras, trocas e estados
-│   │   └── payments/        # Mercado Pago, OAuth e processamento de webhook
+│   │   └── negotiations/    # Compras, trocas e estados
 │   └── test/                # Configuração de testes
 ├── frontend/                # Aplicação Next.js
 │   ├── src/app/             # Rotas e telas
@@ -83,7 +81,7 @@ docker compose down --volumes
 
 ### Opção 2 — Frontend local
 
-O frontend depende da API, do banco de dados e da chave pública do Mercado Pago.
+O frontend depende da API e do banco de dados.
 
 ```bash
 cd frontend
@@ -91,7 +89,7 @@ npm ci
 npm run dev
 ```
 
-Configure `frontend/.env.local` com `API_URL`, `NEXT_PUBLIC_API_URL` e `NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY`; em seguida, abra http://localhost:3001.
+Configure `frontend/.env.local` com `API_URL` e `NEXT_PUBLIC_API_URL`; em seguida, abra http://localhost:3001.
 
 ### Opção 3 — Backend local
 
@@ -100,7 +98,7 @@ Pré-requisitos: Node.js 24+, PostgreSQL 16+ e uma instância de banco criada.
 ```bash
 cd backend
 cp .env.example .env
-# Ajuste DATABASE_URL, BETTER_AUTH_SECRET e as chaves de teste do Mercado Pago no .env
+# Ajuste DATABASE_URL e BETTER_AUTH_SECRET no .env
 npm ci
 npm run prisma:generate
 npx prisma migrate deploy
@@ -128,8 +126,10 @@ npm run build
 
 | Documento | Resumo |
 | --- | --- |
-| [PRD-01](docs/prd/PRD-01.md) | Define visão do produto, público, regras de negócio, requisitos funcionais e não funcionais, histórias de usuário, critérios de aceite e rastreabilidade. |
-| [ADR-001](docs/adr/ADR-001-ARQUITETURA-E-STACK.md) | Registra e justifica a arquitetura separada de frontend, API e banco, além da escolha de Next.js, NestJS, PostgreSQL, Prisma, Mercado Pago e Docker Compose. |
+| [PRD vigente](docs/prd/negociacao-externa/prd.md) | Define visão do produto, público, regras de negócio, requisitos funcionais e não funcionais, histórias de usuário, critérios de aceite e rastreabilidade. |
+| [ADR-001](docs/adr/ADR-001-ARQUITETURA-E-STACK.md) | Registra e justifica a arquitetura separada de frontend, API e banco, além da escolha de Next.js, NestJS, PostgreSQL, Prisma e Docker Compose. A parte financeira foi substituída pela ADR-002. |
+| [ADR-002](docs/adr/negociacao-externa/adr.md) | Registra a redução do escopo financeiro e o contato externo condicionado ao aceite. |
+| [Implementation Plan](docs/ip/negociacao-externa/ip.md) | Detalha implementação, migração, contratos, validações e implantação da redução de escopo. |
 | [Registro de uso de IA](docs/AI_USAGE.md) | Lista os usos da IA como apoio à documentação, implementação, identidade visual, demonstração e infraestrutura do projeto. |
 | [Identidade visual](identidade-visual/README.md) | Reúne estudos, versões aprovadas do logotipo, ícones, exports e guia de aplicação da marca MeLivrei. |
 
@@ -137,28 +137,29 @@ npm run build
 
 | Arquivo | Resumo |
 | --- | --- |
-| [C4 — Contexto](docs/arquitetura/c4-contexto.puml) | Apresenta o MeLivrei como marketplace entre visitantes, usuários autenticados e Mercado Pago, delimitando que a entrega física ocorre fora da plataforma. |
-| [C4 — Containers](docs/arquitetura/c4-containers.puml) | Mostra a comunicação entre navegador, frontend Next.js, API NestJS, PostgreSQL via Prisma e Mercado Pago, além dos módulos internos da API. |
+| [C4 — Contexto](docs/arquitetura/c4-contexto.puml) | Apresenta o MeLivrei como marketplace entre visitantes e usuários autenticados, com contato externo pelo WhatsApp, delimitando que a entrega física ocorre fora da plataforma. |
+| [C4 — Containers](docs/arquitetura/c4-containers.puml) | Mostra a comunicação entre navegador, frontend Next.js, API NestJS, PostgreSQL via Prisma e o link externo para WhatsApp, além dos módulos internos da API. |
 
 ### Diagramas UML
 
 | Arquivo | Resumo |
 | --- | --- |
-| [Casos de uso](docs/uml/casos-de-uso.md) | Mostra os atores visitante, usuário, anunciante, interessado e Mercado Pago nos fluxos de conta, catálogo, anúncios, compra, troca, pagamento, negociação e histórico. |
+| [Casos de uso](docs/uml/casos-de-uso.md) | Mostra os atores visitante, usuário, anunciante, interessado nos fluxos de conta, catálogo, anúncios, propostas, aceite, contato e histórico. |
 | [Especificação de casos de uso](docs/uml/especificacao-casos-de-uso.md) | Detalha pré-condições, fluxos principais, alternativas e pós-condições para gerenciar anúncio, comprar livro e propor troca. |
-| [Diagrama de classes](docs/uml/diagrama-de-classes.puml) | Modela as entidades do domínio — usuário, livro, anúncio, negociação, proposta de troca, pagamento e auditoria — com suas relações e estados. |
-| [Sequência de compra com Mercado Pago](docs/uml/sequencia-compra-mercado-pago.puml) | Descreve o vínculo OAuth, reserva do anúncio, pagamento com Pix ou cartão e confirmação por webhook validado. |
+| [Diagrama de classes](docs/uml/diagrama-de-classes.puml) | Modela as entidades do domínio — usuário, livro, anúncio, negociação, proposta de troca e auditoria — com suas relações e estados. |
 
 ## Fluxos principais
 
-- **Venda:** o vendedor vincula a conta via OAuth, o interessado inicia a compra, o anúncio é reservado e o pagamento é confirmado pela consulta autenticada feita a partir de webhook validado. O split depende da configuração do marketplace.
-- **Troca:** o interessado oferece um anúncio próprio; o proprietário aceita ou recusa, e os dois anúncios são atualizados conforme o resultado.
+- **Venda:** o interessado envia proposta de compra e o anúncio fica reservado. O vendedor aceita ou recusa; a recusa libera o anúncio e o aceite libera o WhatsApp do anunciante ao interessado.
+- **Troca:** o interessado oferece um anúncio próprio; o proprietário aceita ou recusa, e os dois anúncios são atualizados conforme o resultado. O contato também exige aceite.
+- **Contato:** o anunciante cadastra o WhatsApp em Minha conta antes de aceitar. A API só entrega o link ao interessado participante após conferir o aceite; conversa, pagamento e entrega acontecem externamente.
 
 ## Variáveis de ambiente
 
-Para Docker, use a raiz do projeto como referência: [.env.example](.env.example). Para execução local da API, use [backend/.env.example](backend/.env.example). Nunca versione arquivos `.env` nem chaves reais do Mercado Pago.
+Para Docker, use a raiz do projeto como referência: [.env.example](.env.example). Para execução local da API, use [backend/.env.example](backend/.env.example). Nunca versione arquivos `.env` nem segredos reais.
 
 ## Limitações atuais
 
-- A confirmação de pagamento depende do webhook validado do Mercado Pago; enquanto ele é processado, a negociação permanece pendente.
-- O Docker sincroniza o schema com `prisma db push` no ambiente local; ambientes persistentes devem aplicar as migrações Prisma versionadas.
+- O aceite de uma proposta não comprova pagamento nem entrega. A plataforma não acompanha transações financeiras externas.
+- O Docker aplica migrações versionadas com `prisma migrate deploy`. Bancos preexistentes criados por `db push` precisam de baseline conforme [backend/README.md](backend/README.md).
+- A nova migração remove dados e tokens financeiros. Migrações e documentos históricos são preservados para rastreabilidade.

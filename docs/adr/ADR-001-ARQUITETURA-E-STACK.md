@@ -1,6 +1,6 @@
 # ADR-001 — Arquitetura web separada e stack do MeLivrei
 
-- **Status:** Aceito
+- **Status:** Aceito para arquitetura e stack; decisão de pagamentos substituída pela [ADR-002](negociacao-externa/adr.md) em 2026-11-27.
 - **Data:** 2026-10-28
 - **Decisores:** Carlos Felipe Diedrich, Gabriel Baum, Gabriel Tonon, Guilherme Duarte, Meri Ane Bronzoni Paim e Yuri Echevarria
 

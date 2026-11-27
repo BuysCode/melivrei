@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Param,
   Patch,
   Post,
@@ -16,6 +17,7 @@ import {
   CreateTradeDto,
 } from './dto/create-negotiation.dto.js';
 import { NegotiationsService } from './negotiations.service.js';
+import { UpdateContactDto } from './dto/update-contact.dto.js';
 @ApiTags('Negociações')
 @ApiCookieAuth()
 @UseGuards(BetterAuthGuard)
@@ -23,9 +25,35 @@ import { NegotiationsService } from './negotiations.service.js';
 /** Expõe os fluxos autenticados de compra e troca de anúncios. */
 export class NegotiationsController {
   constructor(private readonly negotiations: NegotiationsService) {}
+
+  @Get('contact-profile')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Consultar o próprio WhatsApp' })
+  contactProfile(@CurrentUser() user: AuthenticatedUser) {
+    return this.negotiations.contactProfile(user.id);
+  }
+
+  @Patch('contact-profile')
+  @ApiOperation({ summary: 'Cadastrar ou atualizar o próprio WhatsApp' })
+  updateContact(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateContactDto,
+  ) {
+    return this.negotiations.updateContact(user.id, dto.whatsappNumber);
+  }
+
+  @Get(':id/contact')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({
+    summary: 'Obter WhatsApp do anunciante após aceite da proposta',
+  })
+  contact(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.negotiations.contactForParticipant(user.id, id);
+  }
   @Post('purchases')
-  @ApiOperation({ summary: 'Iniciar compra' })
-  /** Inicia uma negociação de venda para o comprador autenticado. */ purchase(
+  @ApiOperation({ summary: 'Enviar proposta de compra' })
+  /** Inicia uma negociação de venda para o comprador autenticado. */
+  purchase(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreatePurchaseDto,
   ) {
@@ -33,10 +61,8 @@ export class NegotiationsController {
   }
   @Post('trades')
   @ApiOperation({ summary: 'Propor troca' })
-  /** Cria uma proposta de troca entre anúncios. */ trade(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateTradeDto,
-  ) {
+  /** Cria uma proposta de troca entre anúncios. */
+  trade(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateTradeDto) {
     return this.negotiations.trade(user.id, dto);
   }
   @Get('purchases')
@@ -53,14 +79,14 @@ export class NegotiationsController {
     return this.negotiations.findOneForParticipant(user.id, id);
   }
   @Patch(':id/accept')
-  @ApiOperation({ summary: 'Aceitar proposta de troca' })
-  /** Aceita uma proposta de troca como proprietário do anúncio solicitado. */
+  @ApiOperation({ summary: 'Aceitar proposta de venda ou troca' })
+  /** Aceita a proposta como proprietário do anúncio solicitado. */
   accept(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.negotiations.decide(user.id, id, true);
   }
   @Patch(':id/reject')
-  @ApiOperation({ summary: 'Recusar proposta de troca' })
-  /** Recusa uma proposta de troca como proprietário do anúncio solicitado. */
+  @ApiOperation({ summary: 'Recusar proposta de venda ou troca' })
+  /** Recusa a proposta como proprietário do anúncio solicitado. */
   reject(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.negotiations.decide(user.id, id, false);
   }

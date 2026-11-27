@@ -22,7 +22,7 @@ services:
     build:
       context: ./backend
       target: runtime
-    command: ["npx", "prisma", "db", "push", "--skip-generate"]
+    command: ["npx", "prisma", "migrate", "deploy"]
     restart: "no"
     environment: &backend_environment
       NODE_ENV: production
@@ -30,19 +30,6 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-this-to-a-random-secret-with-at-least-32-characters}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
-      MERCADO_PAGO_CLIENT_ID: ${MERCADO_PAGO_CLIENT_ID:-}
-      MERCADO_PAGO_CLIENT_SECRET: ${MERCADO_PAGO_CLIENT_SECRET:-}
-      MERCADO_PAGO_REDIRECT_URI: ${MERCADO_PAGO_REDIRECT_URI:-http://localhost:3000/api/payments/mercadopago/callback}
-      MERCADO_PAGO_TOKEN_ENCRYPTION_KEY: ${MERCADO_PAGO_TOKEN_ENCRYPTION_KEY:-}
-      MERCADO_PAGO_WEBHOOK_SECRET: ${MERCADO_PAGO_WEBHOOK_SECRET:-}
-      MERCADO_PAGO_WEBHOOK_URL: ${MERCADO_PAGO_WEBHOOK_URL:-https://your-public-domain.example/api/payments/webhook}
-      MERCADO_PAGO_ENVIRONMENT: ${MERCADO_PAGO_ENVIRONMENT:-test}
-      MERCADO_PAGO_SPLIT_ENABLED: ${MERCADO_PAGO_SPLIT_ENABLED:-false}
-      MERCADO_PAGO_MARKETPLACE_FEE_PERCENT: ${MERCADO_PAGO_MARKETPLACE_FEE_PERCENT:-0}
-      MERCADO_PAGO_SUCCESS_URL: ${MERCADO_PAGO_SUCCESS_URL:-http://localhost:3001/pagamento/sucesso}
-      MERCADO_PAGO_FAILURE_URL: ${MERCADO_PAGO_FAILURE_URL:-http://localhost:3001/pagamento/falha}
-      MERCADO_PAGO_PENDING_URL: ${MERCADO_PAGO_PENDING_URL:-http://localhost:3001/pagamento/pendente}
-      MERCADO_PAGO_CONNECTION_RETURN_URL: ${MERCADO_PAGO_CONNECTION_RETURN_URL:-http://localhost:3001/conta/pagamentos}
     depends_on:
       db:
         condition: service_healthy
@@ -74,7 +61,6 @@ services:
       args:
         API_URL: http://api:3000
         NEXT_PUBLIC_API_URL: http://localhost:3000
-        NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY: ${NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY:-}
     restart: unless-stopped
     environment:
       API_URL: http://api:3000

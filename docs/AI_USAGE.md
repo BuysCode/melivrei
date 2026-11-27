@@ -93,3 +93,19 @@ A IA auxiliou na criação das páginas de Termos de Uso, Política de Privacida
 ## 23. Documentação do backend com TSDoc e Swagger/OpenAPI
 
 A IA (Codex) documentou o código do backend com comentários TSDoc, equivalente ao Javadoc no ecossistema TypeScript, cobrindo módulos, DTOs, controladores, serviços, autenticação, persistência e integração de pagamentos. Também aprimorou a configuração Swagger/OpenAPI em `/docs`, incluindo o servidor com prefixo `/api`, a descrição da autenticação por cookie Better Auth e o payload tokenizado do Payment Brick. A alteração foi compilada, verificada pelo linter e validada pela suíte de testes do backend.
+
+## 24. Redução do escopo financeiro e decisão arquitetural — 2026-11-27
+
+A IA (Codex) executou a reestruturação solicitada pelo grupo, retirando a integração ativa com Mercado Pago do backend e frontend. Removeu módulo de pagamentos, gateway, OAuth, processamento de webhooks, SDK, checkout, páginas de resultado e configuração específica. Preservou cadastro, autenticação, catálogo, anúncios, identidade visual e histórico não financeiro. Criou a ADR-002 e um novo PRD para registrar a decisão de concentrar o projeto em propostas e contato externo.
+
+## 25. Propostas de venda e WhatsApp condicionado ao aceite — 2026-11-27
+
+A IA alterou o início da compra para proposta `SALE/PENDING` e estendeu a decisão do anunciante às vendas, mantendo a troca existente. Acrescentou cadastro privado de WhatsApp em Minha conta e endpoint que entrega o contato somente ao interessado participante após aceite registrado pelo anunciante. Criou a tela unificada de negociação com aceite, recusa e botão “Entrar em contato”. Conversa, entrega e pagamentos passaram a ocorrer externamente. Aprovações financeiras antigas não são tratadas como aceite.
+
+## 26. Migração e consistência documental — 2026-11-27
+
+A IA criou migração incremental para adicionar o contato, converter compras que aguardavam pagamento em propostas pendentes e eliminar somente estruturas financeiras. Atualizou Compose para aplicar migrações versionadas. Preservou as migrações e documentos históricos para rastreabilidade. Atualizou os dois C4, removeu o UML exclusivo do Mercado Pago e retirou seus elementos dos demais UMLs. Criou novo Implementation Plan e ajustou READMEs e os trechos das páginas do site que descreviam a integração financeira e o compartilhamento de contato.
+
+## 27. Validação da redução de escopo — 2026-11-27
+
+A IA adicionou testes de regras de propostas, autorização, decisões concorrentes, privacidade e validação do WhatsApp. Executou 35 testes do backend e os linters e builds das duas aplicações com sucesso. Validou a cadeia de migrações em PostgreSQL temporário PGlite com dados legados, conferindo a preservação de usuários, propostas, participantes, reservas e auditoria não financeira. Não aplicou a migração ao banco persistente do projeto. Também executou smoke HTTP com três usuários autenticados em banco temporário e conferência no Chromium com Playwright e respostas controladas, cobrindo contato após aceite, cadastro do número e visualização desktop/mobile. As ferramentas Ruflo solicitadas nas instruções do repositório não estavam disponíveis nesta sessão.

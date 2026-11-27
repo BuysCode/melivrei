@@ -5,13 +5,13 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
     title: "Termos de Uso",
     intro:
       "Estas regras explicam como utilizar o MeLivrei, marketplace que aproxima leitores para anunciar, comprar e trocar livros usados.",
-    updatedAt: "23 de novembro de 2026",
+    updatedAt: "27 de novembro de 2026",
     sections: [
       {
         title: "1. Sobre o MeLivrei",
         paragraphs: [
           "O MeLivrei oferece ferramentas para criar conta, publicar anúncios, pesquisar livros e registrar negociações de compra e troca. Os livros são anunciados por seus próprios usuários. O MeLivrei não é, por padrão, o vendedor, proprietário, editor ou expedidor dos livros anunciados.",
-          "A plataforma registra os estados da negociação e, nas vendas habilitadas, integra o pagamento ao Mercado Pago. A combinação de entrega, retirada e demais detalhes da troca ou venda ocorre entre as pessoas envolvidas, fora da plataforma.",
+          "A plataforma registra propostas de compra e troca. Após o anunciante aceitar a proposta, o interessado pode acessar seu WhatsApp para combinar a conversa, o pagamento e a entrega fora do MeLivrei.",
         ],
       },
       {
@@ -35,8 +35,8 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
       {
         title: "4. Compras, trocas e pagamentos",
         paragraphs: [
-          "Uma proposta de compra ou troca não garante aceitação nem reserva definitiva até que o sistema indique o estado correspondente. Nas vendas integradas, o pagamento deve ser feito pelo checkout disponibilizado. O estado de pagamento é atualizado após confirmação processada pelo backend com o Mercado Pago; comprovante enviado por mensagem não substitui essa confirmação.",
-          "O MeLivrei não armazena os dados completos do cartão. O processamento é realizado pelo Mercado Pago, conforme os termos e avisos de privacidade do provedor. A disponibilidade de meios de pagamento, repasses, comissões e funcionalidades depende da configuração e aprovação do provedor.",
+          "Uma proposta de compra ou troca depende do aceite do anunciante. O contato do anunciante só é liberado ao interessado após esse aceite.",
+          "Os participantes combinam qualquer pagamento diretamente por um meio externo. O MeLivrei não processa cobranças, repasses ou confirmações financeiras.",
           "Antes de concluir, comprador e anunciante devem combinar entrega ou retirada, prazos e condições. Não compartilhe senhas, códigos de autenticação ou dados de cartão em mensagens.",
         ],
       },
@@ -71,14 +71,14 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
   "politica-de-privacidade": {
     title: "Política de Privacidade",
     intro:
-      "Explicamos quais dados o MeLivrei usa para manter contas, anúncios, negociações e pagamentos, e como você pode exercer seus direitos de privacidade.",
-    updatedAt: "23 de novembro de 2026",
+      "Explicamos quais dados o MeLivrei usa para manter contas, anúncios e negociações, e como você pode exercer seus direitos de privacidade.",
+    updatedAt: "27 de novembro de 2026",
     sections: [
       {
         title: "1. Quem trata seus dados",
         paragraphs: [
           "Controlador: [inserir razão social ou nome completo do responsável pelo MeLivrei], [CNPJ/CPF e endereço comercial, conforme aplicável]. Canal de privacidade e atendimento: [inserir e-mail ou formulário oficial]. Esses dados de identificação e contato precisam ser preenchidos pelo responsável antes da publicação definitiva desta política.",
-          "O MeLivrei decide por que e como os dados são usados para operar o marketplace. Fornecedores de infraestrutura e serviços podem tratar dados em nosso nome, conforme instruções e contratos aplicáveis. O Mercado Pago trata dados necessários ao pagamento de acordo com seus próprios termos e papéis legais.",
+          "O MeLivrei decide por que e como os dados são usados para operar o marketplace. Fornecedores de infraestrutura e serviços podem tratar dados em nosso nome, conforme instruções e contratos aplicáveis.",
         ],
       },
       {
@@ -90,8 +90,7 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
           "Cadastro e acesso: nome, e-mail, credenciais protegidas por hash e informações técnicas de sessão, para criar conta, autenticar e proteger o acesso.",
           "Anúncios: dados do livro, descrição, imagens e identificador do anunciante, para exibir e administrar o catálogo.",
           "Negociações: participantes, anúncios envolvidos, propostas, estados e histórico de eventos, para registrar e acompanhar compra ou troca.",
-          "Pagamentos: identificadores e metadados necessários para acompanhar a transação e confirmar seu estado; o MeLivrei não armazena o número completo nem o código de segurança do cartão.",
-          "Conta de recebimento do anunciante: dados e tokens de autorização Mercado Pago necessários à integração. Tokens são tratados com proteção técnica, incluindo cifragem quando armazenados pelo serviço.",
+          "Contato: número de WhatsApp informado pelo anunciante, para disponibilizá-lo ao interessado somente após o aceite da proposta.",
         ],
       },
       {
@@ -103,7 +102,7 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
       {
         title: "4. Compartilhamento",
         paragraphs: [
-          "Compartilhamos dados apenas quando necessário para as finalidades descritas. O Mercado Pago recebe dados necessários para processar ou confirmar pagamentos e para a conexão autorizada da conta do vendedor. Para viabilizar uma negociação, informações do anúncio e dados de contato estritamente necessários podem ser apresentados à outra parte; combine entrega ou retirada sem divulgar dados excessivos.",
+          "Compartilhamos dados apenas quando necessário para as finalidades descritas. O WhatsApp do anunciante é liberado ao interessado participante somente após o aceite da proposta. Ao abrir o WhatsApp, a conversa passa a ocorrer nesse serviço externo. Combine entrega ou retirada sem divulgar dados excessivos.",
           "Provedores que hospedam, armazenam, autenticam ou mantêm o serviço podem tratar dados sob instruções do MeLivrei. Também poderemos divulgar informações quando exigido por lei, por ordem válida ou para proteger direitos e segurança. Não vendemos dados pessoais.",
         ],
       },
@@ -139,14 +138,14 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
   "termos-de-servico": {
     title: "Termos de serviço",
     intro:
-      "Condições operacionais para usar os recursos de catálogo, anúncios, negociação e pagamento do MeLivrei.",
-    updatedAt: "23 de novembro de 2026",
+      "Condições operacionais para usar os recursos de catálogo, anúncios e negociação do MeLivrei.",
+    updatedAt: "27 de novembro de 2026",
     sections: [
       {
         title: "1. Serviço oferecido",
         paragraphs: [
           "O MeLivrei disponibiliza uma plataforma digital de intermediação de contato para livros usados. Usuários podem consultar anúncios, criar anúncios de venda ou troca, enviar propostas e acompanhar o histórico. A operação física da entrega ou retirada é combinada diretamente entre vendedor e comprador ou entre as partes da troca.",
-          "Nas vendas habilitadas, o checkout integra o Mercado Pago. O MeLivrei registra dados de referência e atualiza o estado da negociação depois de confirmação verificada pelo backend. A plataforma não aceita comprovantes manuais como confirmação de pagamento.",
+          "Vendas e trocas começam com uma proposta. O anunciante aceita ou recusa, e seu contato pelo WhatsApp só fica disponível ao interessado após o aceite.",
         ],
       },
       {
@@ -164,8 +163,8 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
       {
         title: "4. Pagamentos",
         paragraphs: [
-          "O Mercado Pago processa os pagamentos e pode aplicar suas próprias regras de análise, disponibilidade, tarifas, estornos e prazos. Uma cobrança só será considerada aprovada no MeLivrei quando o backend confirmar o estado recebido e validado junto ao provedor. Se houver recusa, expiração ou divergência, siga as informações exibidas e procure o atendimento oficial.",
-          "Não envie dados completos de cartão, senha ou código de segurança ao anunciante ou ao suporte. O MeLivrei não promete repasse, split ou comissão específicos quando a configuração do provedor não os disponibilizar.",
+          "Os pagamentos são combinados e realizados externamente entre os participantes. O aceite de uma proposta no MeLivrei autoriza o contato e não representa pagamento ou entrega confirmados.",
+          "Não envie dados completos de cartão, senha ou código de segurança ao anunciante ou ao suporte.",
         ],
       },
       {
@@ -178,7 +177,7 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
       {
         title: "6. Suporte e disponibilidade",
         paragraphs: [
-          "O suporte poderá orientar sobre acesso, funcionamento, estados registrados e integração de pagamento. Não podemos alterar por conta própria um estado de pagamento sem confirmação do provedor nem garantir o resultado de uma disputa entre usuários.",
+          "O suporte poderá orientar sobre acesso, funcionamento e estados das propostas. Pagamentos e eventuais devoluções de valores são tratados entre os participantes e o serviço externo escolhido.",
           "Recursos podem ser alterados ou ficar temporariamente indisponíveis para manutenção, segurança ou atualização. Quando possível, informaremos mudanças relevantes na plataforma.",
         ],
       },
@@ -193,34 +192,34 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
   "politica-de-reembolso": {
     title: "Política de reembolso",
     intro:
-      "Como solicitar e acompanhar a devolução de valores de uma compra de livro feita pelo checkout do MeLivrei.",
-    updatedAt: "23 de novembro de 2026",
+      "Orientações sobre devolução de valores de uma compra de livro negociada entre usuários, com pagamento externo.",
+    updatedAt: "27 de novembro de 2026",
     sections: [
       {
         title: "1. A quem se aplica",
         paragraphs: [
-          "Esta política explica o fluxo operacional de reembolso para pagamentos processados pelo Mercado Pago em compras de livros no MeLivrei. Ela não elimina nem reduz direitos previstos no Código de Defesa do Consumidor ou em outras normas obrigatórias. A aplicação desses direitos depende da natureza da relação e das circunstâncias da compra; uma negociação entre particulares não é automaticamente uma relação de consumo, nem pode ser presumida como exceção em todos os casos.",
+          "Esta política orienta sobre devoluções de valores de compras negociadas entre usuários, com pagamentos feitos fora do MeLivrei. Ela não elimina nem reduz direitos previstos no Código de Defesa do Consumidor ou em outras normas obrigatórias. A aplicação desses direitos depende da natureza da relação e das circunstâncias da compra; uma negociação entre particulares não é automaticamente uma relação de consumo, nem pode ser presumida como exceção em todos os casos.",
         ],
       },
       {
         title: "2. Como pedir ajuda",
         paragraphs: [
-          "Se a compra foi cancelada, cobrada em duplicidade, não reconhecida, ou se você acredita ter direito a reembolso, registre o pedido pelo canal oficial de atendimento do MeLivrei e informe o identificador da negociação ou do pagamento, a data e o motivo. Não inclua número completo de cartão nem código de segurança. Para problemas de entrega ou condição do livro, descreva o ocorrido e anexe apenas evidências necessárias, evitando dados de terceiros.",
-          "O MeLivrei verificará o estado registrado e, quando necessário, orientará o contato com o vendedor ou com o Mercado Pago. O recebimento do pedido não significa aprovação automática. A decisão será comunicada após análise dos fatos, das regras aplicáveis e do estado do pagamento.",
+          "Se a compra foi cancelada, cobrada em duplicidade, não reconhecida, ou se você acredita ter direito a reembolso, entre em contato com o vendedor e com o serviço externo usado para pagar. Ao relatar um problema ao MeLivrei, informe o identificador da negociação, a data e o motivo. Não inclua número completo de cartão nem código de segurança. Para problemas de entrega ou condição do livro, descreva o ocorrido e anexe apenas evidências necessárias, evitando dados de terceiros.",
+          "O MeLivrei pode consultar o histórico da proposta, mas não recebe valores nem inicia reembolsos. O pedido de devolução deve ser tratado com o vendedor e, quando necessário, com o serviço externo usado no pagamento.",
         ],
       },
       {
         title: "3. Processamento do valor",
         paragraphs: [
-          "Quando o reembolso for cabível e autorizado no fluxo aplicável, o estorno é solicitado ao Mercado Pago ou processado conforme o arranjo de pagamento. O prazo para o valor aparecer depende do meio utilizado e dos procedimentos do provedor ou emissor. Consulte o próprio Mercado Pago ou a instituição financeira para obter a previsão específica da transação.",
-          "O MeLivrei não realiza reembolso de pagamento que não conste como aprovado no sistema. Em caso de Pix pendente, pagamento recusado ou expirado, confirme primeiro com o provedor se houve débito. Não fazemos pagamentos de reembolso por fora da transação original sem verificação adequada.",
+          "Quando houver devolução de valores, as partes devem combinar o procedimento com o serviço externo utilizado para o pagamento. Os prazos dependem desse serviço e da instituição financeira.",
+          "O MeLivrei não processa pagamentos ou reembolsos e não registra aprovação financeira das compras. Confirme qualquer débito ou devolução diretamente com o serviço escolhido.",
         ],
       },
       {
         title: "4. Desistência e cancelamento",
         paragraphs: [
           "Se desejar cancelar antes da conclusão, contate o anunciante e o MeLivrei prontamente. Em compras realizadas fora de estabelecimento comercial, o direito de arrependimento previsto em lei poderá ser aplicável conforme a relação concreta; quando aplicável, o prazo legal é contado nos termos da legislação e a restituição deve observar as regras legais. Esta política não exige que o consumidor renuncie a esse direito.",
-          "Cancelamentos por recusa ou expiração de pagamento seguem o estado informado pelo Mercado Pago. O anúncio poderá voltar a ficar disponível conforme o estado da negociação.",
+          "O aceite ou a recusa da proposta não executa nem cancela operações financeiras externas.",
         ],
       },
       {
@@ -233,7 +232,7 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
       {
         title: "6. Informações de contato",
         paragraphs: [
-          "Use o canal oficial de atendimento indicado no site ou na sua conta. Inclua apenas os dados necessários para localizar a negociação. Para dúvidas sobre uma cobrança processada, você também pode consultar o suporte do Mercado Pago.",
+          "Use o canal oficial de atendimento indicado no site ou na sua conta. Inclua apenas os dados necessários para localizar a negociação. Para dúvidas sobre uma cobrança externa, consulte o vendedor e o serviço utilizado para pagar.",
         ],
       },
     ],
@@ -242,7 +241,7 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
     title: "Trocas e devoluções",
     intro:
       "Regras práticas para trocas de livros entre usuários e para devoluções ligadas a uma compra, respeitando os direitos previstos em lei.",
-    updatedAt: "23 de novembro de 2026",
+    updatedAt: "27 de novembro de 2026",
     sections: [
       {
         title: "1. Troca de livros entre usuários",
@@ -273,7 +272,7 @@ export const legalDocuments: Record<string, LegalDocumentContent> = {
       {
         title: "5. Pagamento e devolução do valor",
         paragraphs: [
-          "Se uma compra paga pelo checkout precisar ser cancelada ou reembolsada, consulte também a Política de reembolso. Os valores retornam pelo fluxo do Mercado Pago ou do meio de pagamento original, e o tempo de processamento pode variar conforme o provedor e o emissor.",
+          "Se uma compra com pagamento externo precisar ser cancelada ou reembolsada, combine a devolução diretamente com o vendedor e com o serviço utilizado para pagar. Consulte também a Política de reembolso.",
         ],
       },
       {

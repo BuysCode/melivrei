@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -11,7 +12,6 @@ import {
   NegotiationType,
 } from '../generated/prisma/client.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { PaymentsService } from '../payments/payments.service.js';
 import {
   CreatePurchaseDto,
   CreateTradeDto,
@@ -20,10 +20,7 @@ import {
 @Injectable()
 /** Centraliza as regras transacionais para compras e propostas de troca. */
 export class NegotiationsService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly payments: PaymentsService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
   /**
    * Reserva um anúncio de venda e cria a negociação de compra.
    *
@@ -36,7 +33,6 @@ export class NegotiationsService {
     );
     if (listing.ownerId === buyerId)
       throw new BadRequestException('Você não pode comprar o próprio anúncio.');
-    await this.payments.assertSellerCanReceive(listing.ownerId);
     const negotiation = await this.prisma.$transaction(async (tx) => {
       const reservation = await tx.listing.updateMany({
         where: { id: listing.id, status: ListingStatus.AVAILABLE },
@@ -48,14 +44,14 @@ export class NegotiationsService {
         data: {
           listingId: listing.id,
           type: NegotiationType.SALE,
-          status: NegotiationStatus.PENDING_PAYMENT,
+          status: NegotiationStatus.PENDING,
           participants: {
             create: [{ userId: buyerId }, { userId: listing.ownerId }],
           },
           auditEvents: {
             create: {
               actorId: buyerId,
-              action: 'PURCHASE_STARTED',
+              action: 'SALE_PROPOSED',
               entityType: 'Negotiation',
               entityId: listing.id,
             },
@@ -63,9 +59,7 @@ export class NegotiationsService {
         },
       });
     });
-    if (dto.deferCheckout) return { ...negotiation, payment: null };
-    const payment = await this.payments.createForNegotiation(negotiation.id);
-    return { ...negotiation, payment };
+    return negotiation;
   }
   /**
    * Cria uma proposta de troca e marca ambos os anúncios como em negociação.
@@ -116,7 +110,7 @@ export class NegotiationsService {
     });
   }
   /**
-   * Aceita ou recusa uma proposta de troca feita para o proprietário do anúncio.
+   * Aceita ou recusa uma proposta de venda ou troca como proprietário.
    *
    * @throws {ForbiddenException} Quando quem decide não é o proprietário.
    */
@@ -130,43 +124,58 @@ export class NegotiationsService {
       throw new ForbiddenException(
         'Somente o proprietário pode decidir a proposta.',
       );
-    if (
-      negotiation.type !== NegotiationType.TRADE ||
-      !negotiation.tradeOffer ||
-      negotiation.status !== NegotiationStatus.PENDING
-    )
+    if (negotiation.status !== NegotiationStatus.PENDING)
       throw new BadRequestException('Esta negociação não pode ser decidida.');
-    const offeredListingId = negotiation.tradeOffer.offeredListingId;
+    if (accept) {
+      const owner = await this.contactProfile(ownerId);
+      if (!owner.whatsappNumber)
+        throw new BadRequestException(
+          'Cadastre seu WhatsApp em Minha conta antes de aceitar uma proposta.',
+        );
+    }
     return this.prisma.$transaction(async (tx) => {
-      await tx.tradeOffer.update({
-        where: { negotiationId: id },
-        data: { status: accept ? 'ACCEPTED' : 'REJECTED' },
+      const decision = await tx.negotiation.updateMany({
+        where: { id, status: NegotiationStatus.PENDING },
+        data: {
+          status: accept
+            ? NegotiationStatus.APPROVED
+            : NegotiationStatus.REJECTED,
+        },
       });
+      if (decision.count !== 1)
+        throw new ConflictException('Esta proposta já foi respondida.');
+      if (negotiation.tradeOffer)
+        await tx.tradeOffer.update({
+          where: { negotiationId: id },
+          data: { status: accept ? 'ACCEPTED' : 'REJECTED' },
+        });
       await tx.auditEvent.create({
         data: {
           actorId: ownerId,
           negotiationId: id,
-          action: accept ? 'TRADE_ACCEPTED' : 'TRADE_REJECTED',
+          action: `${negotiation.type}_${accept ? 'ACCEPTED' : 'REJECTED'}`,
           entityType: 'Negotiation',
           entityId: id,
         },
       });
-      if (accept)
-        return tx.negotiation.update({
-          where: { id },
-          data: { status: NegotiationStatus.APPROVED },
+      if (!accept)
+        await tx.listing.updateMany({
+          where: {
+            id: {
+              in: [
+                negotiation.listingId,
+                ...(negotiation.tradeOffer
+                  ? [negotiation.tradeOffer.offeredListingId]
+                  : []),
+              ],
+            },
+          },
+          data: { status: ListingStatus.AVAILABLE },
         });
-      await tx.listing.updateMany({
-        where: { id: { in: [negotiation.listingId, offeredListingId] } },
-        data: { status: ListingStatus.AVAILABLE },
-      });
-      return tx.negotiation.update({
-        where: { id },
-        data: { status: NegotiationStatus.REJECTED },
-      });
+      return tx.negotiation.findUniqueOrThrow({ where: { id } });
     });
   }
-  /** Lista negociações de venda das quais o usuário participa. */
+  /** Lista propostas de venda e troca das quais o usuário participa. */
   listPurchases(userId: string) {
     return this.prisma.negotiation.findMany({
       where: { participants: { some: { userId } } },
@@ -204,12 +213,70 @@ export class NegotiationsService {
             },
           },
         },
-        payment: true,
         auditEvents: { orderBy: { createdAt: 'desc' } },
       },
     });
     if (!negotiation) throw new NotFoundException('Negociação não encontrada.');
-    return negotiation;
+    return {
+      ...negotiation,
+      canContact:
+        negotiation.status === NegotiationStatus.APPROVED &&
+        negotiation.listing.ownerId !== userId &&
+        negotiation.auditEvents.some(
+          (event) =>
+            event.actorId === negotiation.listing.ownerId &&
+            ['SALE_ACCEPTED', 'TRADE_ACCEPTED'].includes(event.action),
+        ),
+    };
+  }
+
+  /** Consulta somente o contato da própria sessão. Não é exposto pelo catálogo. */
+  async contactProfile(userId: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { whatsappNumber: true },
+    });
+  }
+
+  /** Atualiza o contato da própria sessão sem modificar autenticação ou anúncios. */
+  updateContact(userId: string, whatsappNumber: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { whatsappNumber },
+      select: { whatsappNumber: true },
+    });
+  }
+
+  /** Libera o WhatsApp do anunciante apenas ao interessado após aceite explícito. */
+  async contactForParticipant(userId: string, id: string) {
+    const negotiation = await this.prisma.negotiation.findFirst({
+      where: { id, participants: { some: { userId } } },
+      select: {
+        status: true,
+        listing: { select: { ownerId: true } },
+        auditEvents: {
+          where: { action: { in: ['SALE_ACCEPTED', 'TRADE_ACCEPTED'] } },
+          select: { actorId: true },
+        },
+      },
+    });
+    if (!negotiation) throw new NotFoundException('Negociação não encontrada.');
+    if (
+      negotiation.listing.ownerId === userId ||
+      negotiation.status !== NegotiationStatus.APPROVED ||
+      !negotiation.auditEvents.some(
+        (event) => event.actorId === negotiation.listing.ownerId,
+      )
+    )
+      throw new ForbiddenException(
+        'Contato disponível somente ao interessado após o aceite do anunciante.',
+      );
+    const owner = await this.contactProfile(negotiation.listing.ownerId);
+    if (!owner.whatsappNumber)
+      throw new NotFoundException(
+        'O anunciante ainda não cadastrou seu WhatsApp.',
+      );
+    return { url: `https://wa.me/${owner.whatsappNumber}` };
   }
   /** Busca um anúncio disponível e, se informado, compatível com a modalidade. */
   private async availableListing(id: string, mode?: ListingMode) {

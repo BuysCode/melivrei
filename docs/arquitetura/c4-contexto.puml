@@ -15,14 +15,14 @@ skinparam rectangle {
 rectangle "Visitante" as visitante #E8F0FE
 rectangle "Usuário autenticado\n(comprador, vendedor, anunciante ou interessado)" as usuario #E8F0FE
 
-rectangle "MeLivrei\nMarketplace web de livros usados\n\nPermite publicar anúncios, pesquisar livros,\nnegociar vendas e trocas,\ncontrolar pagamentos e histórico." as sistema #DCFCE7
+rectangle "MeLivrei\nMarketplace web de livros usados\n\nPermite publicar anúncios, pesquisar livros,\nnegociar vendas e trocas,\nregistrar propostas, decisões e histórico." as sistema #DCFCE7
 
-rectangle "Mercado Pago\nGateway externo de pagamentos" as mercadoPago #FFF7ED
+rectangle "WhatsApp\nConversa externa entre participantes" as whatsapp #FFF7ED
 
 visitante --> sistema : Consulta catálogo e pesquisa livros\nCria uma conta
 usuario --> sistema : Gerencia anúncios\nCompra, vende e propõe trocas\nAcompanha negociações
-sistema --> mercadoPago : Autoriza vendedores via OAuth\nCria checkout e split 1:1 configurável
-mercadoPago --> sistema : Notifica pagamento\npor webhook assinado
+
+usuario --> whatsapp : Abre o contato do anunciante após aceite\nCombina venda, troca, pagamento e entrega externamente
 
 legend right
     |= Elemento |= Significado |
@@ -34,7 +34,8 @@ endlegend
 note bottom of sistema
     Escopo: marketplace web para venda e troca de livros usados.
     A entrega física ocorre fora do sistema; a aplicação registra os estados,
-    pagamentos e histórico das negociações.
+    decisões e histórico das negociações.
+    A API não processa pagamentos nem integra uma API do WhatsApp.
 end note
 
 @enduml

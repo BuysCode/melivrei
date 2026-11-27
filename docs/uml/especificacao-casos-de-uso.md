@@ -33,38 +33,27 @@ Este documento detalha os casos de uso centrais do MeLivrei. Os identificadores 
 
 **Critérios relacionados:** `AC-005` a `AC-008`.
 
-## UC-06 — Comprar livro
+## UC-06 — Propor compra
 
-**Atores:** Interessado, Anunciante e Mercado Pago.
+**Atores:** Interessado e Anunciante.
 
-**Objetivo:** iniciar e concluir a compra de um livro anunciado.
+**Objetivo:** solicitar negociação de compra, sujeita ao aceite do anunciante.
 
-**Pré-condições:** o comprador está autenticado; o anúncio pertence a outro usuário; o anúncio está disponível; a modalidade é venda.
+**Pré-condições:** interessado autenticado; anúncio disponível de venda pertencente a outro usuário.
 
 **Fluxo principal:**
 
-1. O interessado seleciona um anúncio disponível.
-2. O sistema verifica a disponibilidade e cria uma negociação com status `PENDING_PAYMENT`.
-3. O sistema reserva temporariamente o anúncio.
-4. O sistema cria uma cobrança no Mercado Pago.
-5. O interessado conclui o pagamento no Mercado Pago.
-6. O Mercado Pago envia a confirmação ao backend.
-7. O backend valida a assinatura e a idempotência do evento.
-8. O sistema atualiza o pagamento para `APPROVED`.
-9. O sistema atualiza a negociação e o anúncio.
-10. O anunciante registra a entrega ou conclusão da venda.
+1. O interessado envia uma proposta de compra.
+2. O sistema reserva o anúncio e cria uma negociação `SALE/PENDING`, com ambos os participantes e auditoria.
+3. O anunciante consulta a proposta e aceita ou recusa em UC-11.
+4. Após o aceite, o interessado acessa o WhatsApp do anunciante em UC-13.
+5. Conversa, pagamento e entrega são combinados externamente.
 
-**Fluxos alternativos:**
+**Alternativas:** anúncio indisponível, tentativa de comprar o próprio livro ou reserva concorrente impedem a criação. A recusa libera o anúncio e mantém o histórico da proposta recusada.
 
-- Se o anúncio estiver indisponível, o sistema não cria a negociação.
-- Se o comprador tentar comprar o próprio anúncio, o sistema bloqueia a operação.
-- Se o pagamento for recusado ou expirar, o sistema encerra a tentativa e libera o anúncio.
-- Se o usuário enviar somente um comprovante manual, o sistema não confirma o pagamento.
-- Se o webhook for inválido ou repetido, o sistema rejeita ou ignora o evento sem duplicar a transação.
+**Pós-condições:** proposta pendente, aceita ou recusada; nenhum estado financeiro é registrado.
 
-**Pós-condições:** em caso de sucesso, a venda é registrada e o anúncio fica reservado ou concluído; em caso de falha, o anúncio volta a ficar disponível.
-
-**Requisitos relacionados:** `RF-007`, `RF-009`, `RF-010`, `RNF-006`, `RNF-007`.
+**Requisitos relacionados:** `RF-007`, `RF-010`, `RF-011` do PRD vigente.
 
 **Critérios relacionados:** `AC-012` a `AC-015`.
 
@@ -82,7 +71,7 @@ Este documento detalha os casos de uso centrais do MeLivrei. Os identificadores 
 2. O sistema verifica a disponibilidade dos dois anúncios e registra a proposta.
 3. O proprietário do anúncio solicitado aceita ou recusa a proposta.
 4. Em caso de aceite, o sistema reserva os dois anúncios.
-5. Após a confirmação das partes, o sistema conclui a troca e torna os anúncios indisponíveis.
+5. O aceite libera o WhatsApp do anunciante ao interessado em UC-13; conversa e entrega da troca são combinadas externamente.
 
 **Fluxos alternativos:**
 
@@ -90,8 +79,44 @@ Este documento detalha os casos de uso centrais do MeLivrei. Os identificadores 
 - Se o interessado oferecer o próprio anúncio solicitado, o sistema bloqueia a operação.
 - Se o proprietário recusar ou qualquer participante cancelar antes da conclusão, o sistema encerra a negociação e libera os anúncios conforme a regra definida.
 
-**Pós-condições:** a troca é concluída ou encerrada, com o estado e o histórico da negociação atualizados.
+**Pós-condições:** a proposta de troca é aceita ou recusada, com estado e histórico atualizados; o aceite permite o contato externo.
 
 **Requisitos relacionados:** `RF-008`, `RF-010`, `RF-011`.
 
 **Critérios relacionados:** `AC-016` a `AC-018`.
+
+## UC-11 — Aceitar ou recusar proposta
+
+**Ator:** Anunciante proprietário do anúncio solicitado.
+
+**Pré-condições:** negociação `PENDING`; para aceitar, WhatsApp cadastrado em UC-12.
+
+1. O anunciante decide a proposta de venda ou troca.
+2. O sistema altera uma única vez para `APPROVED` ou `REJECTED` e registra autor e decisão na auditoria.
+3. Em troca, atualiza também a oferta. A recusa libera o anúncio e, em troca, o livro oferecido; o aceite mantém a reserva.
+
+**Alternativas:** terceiro ou interessado não pode decidir; proposta já respondida não pode ser decidida novamente; falta de WhatsApp impede somente o aceite e orienta o cadastro em Minha conta.
+
+**Critérios relacionados:** `AC-013`, `AC-015`, `AC-021`.
+
+## UC-12 — Cadastrar WhatsApp
+
+**Ator:** Usuário autenticado.
+
+1. Em Minha conta, o usuário informa ou atualiza o próprio WhatsApp com código do país e DDD.
+2. O sistema valida de 8 a 15 dígitos, sem zero inicial, e salva somente na conta da sessão.
+3. O número permanece fora do catálogo, dos detalhes públicos, da sessão de autenticação e do histórico de negociações.
+
+**Critério relacionado:** `AC-021`.
+
+## UC-13 — Entrar em contato após aceite
+
+**Ator:** Interessado participante da negociação.
+
+1. O sistema verifica participação, estado `APPROVED` e evento de aceite cujo autor é o anunciante.
+2. A tela libera “Entrar em contato”, com link para `https://wa.me/<numero>` do anunciante.
+3. O interessado abre o WhatsApp e combina venda ou troca externamente.
+
+**Alternativas:** sem sessão, a API exige autenticação; terceiros recebem negociação não encontrada; proposta pendente, recusada, cancelada ou concluída e aprovação financeira legada sem aceite não liberam contato. A restrição também vale para chamadas diretas à API. Contato ainda não cadastrado resulta em mensagem de indisponibilidade.
+
+**Critérios relacionados:** `AC-014`, `AC-022`, `AC-023`.

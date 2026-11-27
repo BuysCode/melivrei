@@ -1,7 +1,7 @@
 # PRD — MeLivrei
 
 > Tipo: Produto inicial · Data: 2026-10-28  
-> Status: Pronto para planejamento
+> Status: Histórico — substituído pelo [PRD de negociação externa](negociacao-externa/prd.md) em 2026-11-27.
 
 ## Visão geral e objetivo
 

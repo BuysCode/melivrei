@@ -51,7 +51,10 @@ export function ListingActions({ listing }: { listing: Listing }) {
         <h2>Gostou deste livro?</h2>
         <p>
           Entre para{" "}
-          {listing.mode === "SALE" ? "iniciar a compra" : "propor uma troca"}.
+          {listing.mode === "SALE"
+            ? "enviar uma proposta de compra"
+            : "propor uma troca"}
+          .
         </p>
         <Link
           className="button"
@@ -80,7 +83,7 @@ export function ListingActions({ listing }: { listing: Listing }) {
         "/negotiations/purchases",
         {
           method: "POST",
-          body: JSON.stringify({ listingId: listing.id, deferCheckout: true }),
+          body: JSON.stringify({ listingId: listing.id }),
         },
       );
       router.push(`/negociacoes/${purchase.id}`);
@@ -88,7 +91,7 @@ export function ListingActions({ listing }: { listing: Listing }) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Não foi possível iniciar a compra.",
+          : "Não foi possível enviar a proposta.",
       );
       setBusy(false);
     }
@@ -121,9 +124,10 @@ export function ListingActions({ listing }: { listing: Listing }) {
 
   return (
     <div className="action-box">
-      <h2>
-        {listing.mode === "SALE" ? "Comprar este livro" : "Propor uma troca"}
-      </h2>
+      <h2>{listing.mode === "SALE" ? "Propor compra" : "Propor uma troca"}</h2>
+      <p>
+        O contato com o anunciante será liberado após ele aceitar sua proposta.
+      </p>
       {error && (
         <p className="form-error" role="alert">
           {error}
@@ -136,7 +140,7 @@ export function ListingActions({ listing }: { listing: Listing }) {
           disabled={busy}
           onClick={startPurchase}
         >
-          {busy ? "Iniciando compra…" : "Iniciar compra"}
+          {busy ? "Enviando proposta…" : "Enviar proposta de compra"}
         </button>
       ) : loadingListings ? (
         <p>Carregando seus anúncios…</p>

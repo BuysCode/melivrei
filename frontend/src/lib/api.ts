@@ -37,11 +37,7 @@ export type Negotiation = {
     status: string;
     offeredListing?: Listing;
   } | null;
-  payment?: {
-    status: string;
-    amount: string | number;
-    providerPaymentId?: string | null;
-  } | null;
+  canContact: boolean;
   auditEvents?: { id: string; action: string; createdAt: string }[];
 };
 

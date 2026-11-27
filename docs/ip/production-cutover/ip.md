@@ -1,6 +1,6 @@
 # Implementation Plan — Production cutover
 
-> Status: Implementado · Atualizado em 2026-11-24
+> Status: Histórico · Implementado em 2026-11-24. As etapas financeiras foram substituídas pelo [plano de negociação externa](../negociacao-externa/ip.md) em 2026-11-27.
 
 ## Objetivo
 

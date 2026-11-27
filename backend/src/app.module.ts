@@ -4,7 +4,6 @@ import { AuthModule } from './auth/auth.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ListingsModule } from './listings/listings.module.js';
 import { NegotiationsModule } from './negotiations/negotiations.module.js';
-import { PaymentsModule } from './payments/payments.module.js';
 
 @Module({
   imports: [
@@ -13,7 +12,6 @@ import { PaymentsModule } from './payments/payments.module.js';
     AuthModule,
     ListingsModule,
     NegotiationsModule,
-    PaymentsModule,
   ],
 })
 /** Raiz da composição dos módulos da aplicação MeLivrei. */

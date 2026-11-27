@@ -9,10 +9,9 @@ Inicie PostgreSQL e a API conforme o [README da raiz](../README.md). Depois crie
 ```dotenv
 API_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:3000
-NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY=
 ```
 
-Preencha a chave pública do Mercado Pago e execute:
+Execute:
 
 ```bash
 npm ci
@@ -21,11 +20,13 @@ npm run dev
 
 O site fica disponível em http://localhost:3001.
 
-## Pagamentos
+## Propostas e contato externo
 
-O comprador inicia uma compra por um anúncio de venda. O checkout prepara a negociação na API e exibe o Payment Brick do Mercado Pago para Pix ou cartão. Dados completos do cartão são tratados pelo Mercado Pago; o frontend não os armazena nem os envia diretamente à aplicação. O estado da compra só é aprovado após o webhook validado pelo backend.
+O interessado envia uma proposta de compra ou troca. Em Minha conta, o anunciante cadastra seu WhatsApp com código do país e DDD e acompanha as propostas recebidas. Na tela da negociação, pode aceitar ou recusar.
 
-Antes de receber pagamentos, o vendedor conecta sua conta Mercado Pago em **Minha conta**. As variáveis de OAuth, webhook e criptografia do backend estão documentadas em [backend/.env.example](../backend/.env.example).
+Somente após o aceite, a tela do interessado apresenta **Entrar em contato**, com link para o WhatsApp do anunciante. A API valida participação e aceite antes de retornar o contato. A recusa libera o anúncio e não disponibiliza contato. Conversa, pagamento e entrega são combinados externamente; o aceite não representa confirmação financeira.
+
+Checkout, resultados de pagamento e conexão de conta financeira foram removidos. A interface mantém as páginas e o estilo existentes nos demais fluxos.
 
 ## Verificação
 

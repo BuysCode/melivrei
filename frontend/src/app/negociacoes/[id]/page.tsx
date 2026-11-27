@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LiveCheckout } from "@/components/live-checkout";
+import { LiveNegotiation } from "@/components/live-negotiation";
 export const metadata: Metadata = { title: "Acompanhar negociação" };
 export default async function Page({
   params,
@@ -7,5 +7,5 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <LiveCheckout key={id} id={id} />;
+  return <LiveNegotiation key={id} id={id} />;
 }

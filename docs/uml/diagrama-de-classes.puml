@@ -12,25 +12,12 @@ package "Identidade e acesso" {
         +id: UUID
         +name: String
         +email: String
+        -whatsappNumber: String?
         -passwordHash: String
         +role: UserRole
         +status: UserStatus
         +createdAt: DateTime
         +updateProfile(): void
-    }
-
-    class SellerPaymentAccount {
-        +providerUserId: String
-        -accessTokenEncrypted: String
-        -refreshTokenEncrypted: String
-        +tokenExpiresAt: DateTime
-        +status: String
-    }
-
-    class MercadoPagoOAuthState {
-        -stateHash: String
-        +expiresAt: DateTime
-        +consumedAt: DateTime
     }
 
     enum UserRole {
@@ -122,7 +109,6 @@ package "Negociações" {
 
     enum NegotiationStatus {
         PENDING
-        PENDING_PAYMENT
         APPROVED
         REJECTED
         CANCELLED
@@ -134,51 +120,6 @@ package "Negociações" {
         ACCEPTED
         REJECTED
         CANCELLED
-    }
-}
-
-package "Pagamentos" {
-    class Payment {
-        +id: UUID
-        +provider: PaymentProvider
-        +providerPaymentId: String?
-        +providerPreferenceId: String?
-        +checkoutUrl: String?
-        +amount: Money
-        +marketplaceFee: Money
-        +purpose: PaymentPurpose
-        +status: PaymentStatus
-        +createdAt: DateTime
-        +approve(): void
-        +refund(): void
-    }
-
-    class PaymentEvent {
-        +id: UUID
-        +providerEventId: String
-        +eventType: String
-        +payloadHash: String
-        +receivedAt: DateTime
-        +processedAt: DateTime
-        +process(): void
-    }
-
-    enum PaymentProvider {
-        MERCADO_PAGO
-    }
-
-    enum PaymentPurpose {
-        SALE
-    }
-
-    enum PaymentStatus {
-        PENDING
-        APPROVED
-        REFUSED
-        EXPIRED
-        CANCELLED
-        REFUNDED
-        IN_DISPUTE
     }
 }
 
@@ -194,8 +135,6 @@ package "Auditoria" {
 }
 
 User "1" -- "0..*" Listing : owns >
-User "1" -- "0..1" SellerPaymentAccount : connects >
-User "1" -- "0..*" MercadoPagoOAuthState : authorizes >
 User "1" -- "0..*" Negotiation : participates >
 User "1" -- "0..*" TradeOffer : proposes >
 User "1" -- "0..*" AuditEvent : triggers >
@@ -203,9 +142,7 @@ Book "1" -- "0..*" Listing : advertised as >
 Listing "1" *-- "0..*" ListingImage : contains >
 Listing "1" -- "0..*" Negotiation : receives >
 Negotiation "1" *-- "0..1" TradeOffer : has >
-Negotiation "1" *-- "0..1" Payment : requires >
 Negotiation "1" -- "0..*" AuditEvent : records >
-Payment "1" *-- "0..*" PaymentEvent : receives >
 
 User --> UserRole
 User --> UserStatus
@@ -215,15 +152,13 @@ Listing --> ListingStatus
 Negotiation --> NegotiationType
 Negotiation --> NegotiationStatus
 TradeOffer --> TradeOfferStatus
-Payment --> PaymentProvider
-Payment --> PaymentPurpose
-Payment --> PaymentStatus
 
-note right of Payment
-  A aplicação não armazena
-  dados completos de cartão.
-  A confirmação é recebida
-  por webhook do Mercado Pago.
+
+note right of Negotiation
+  Propostas de venda e troca exigem aceite do anunciante.
+  Somente o interessado participante acessa o WhatsApp
+  após APPROVED e um evento de aceite do anunciante.
+  Conversa, pagamento e entrega ocorrem externamente.
 end note
 
 @enduml

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { browserApi, getMyListings, type Listing } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { ListingCard } from "./listing-card";
@@ -20,7 +20,6 @@ const statusLabels: Record<string, string> = {
   COMPLETED: "Concluído",
   CANCELLED: "Cancelado",
   PENDING: "Aguardando resposta",
-  PENDING_PAYMENT: "Aguardando pagamento",
   APPROVED: "Aprovada",
   REJECTED: "Recusada",
 };
@@ -32,7 +31,9 @@ export function LivePurchaseAccount() {
     null,
   );
   const [listings, setListings] = useState<Listing[] | null>(null);
-  const [connected, setConnected] = useState<boolean | null>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [contactLoaded, setContactLoaded] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -56,34 +57,45 @@ export function LivePurchaseAccount() {
         if (!controller.signal.aborted)
           setError("Não foi possível carregar seus anúncios.");
       });
-    browserApi<{ connected: boolean }>(
-      "/payments/mercadopago/connection",
+    browserApi<{ whatsappNumber: string | null }>(
+      "/negotiations/contact-profile",
       options,
     )
-      .then(({ connected }) => {
-        if (!controller.signal.aborted) setConnected(connected);
+      .then(({ whatsappNumber }) => {
+        if (!controller.signal.aborted) {
+          setWhatsappNumber(whatsappNumber ?? "");
+          setContactLoaded(true);
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted)
-          setError("Não foi possível consultar sua conta Mercado Pago.");
+          setError(
+            "Não foi possível carregar seu WhatsApp. Atualize a página para tentar novamente.",
+          );
       });
     return () => controller.abort();
   }, [userId]);
 
-  async function connect() {
+  async function saveContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setBusy(true);
+    setSaved(false);
     setError("");
     try {
-      const { authorizationUrl } = await browserApi<{
-        authorizationUrl: string;
-      }>("/payments/mercadopago/connect", {});
-      window.location.assign(authorizationUrl);
+      await browserApi("/negotiations/contact-profile", {
+        method: "PATCH",
+        body: JSON.stringify({
+          whatsappNumber: whatsappNumber.replace(/\D/g, ""),
+        }),
+      });
+      setSaved(true);
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Não foi possível conectar sua conta.",
+          : "Não foi possível salvar seu WhatsApp.",
       );
+    } finally {
       setBusy(false);
     }
   }
@@ -107,19 +119,41 @@ export function LivePurchaseAccount() {
         <h1>Minha conta</h1>
       </div>
       <section className="form-panel">
-        <h2>Receber por suas vendas</h2>
-        {connected === true && <p>Conta Mercado Pago conectada.</p>}
-        {connected === false && (
+        <h2>Contato para suas negociações</h2>
+        <p>
+          Cadastre seu WhatsApp para aceitar propostas de venda ou troca. O
+          contato só será liberado ao interessado depois do seu aceite.
+        </p>
+        <form className="form-stack" onSubmit={saveContact}>
+          <div className="field">
+            <label htmlFor="whatsappNumber">
+              WhatsApp com código do país e DDD
+            </label>
+            <input
+              id="whatsappNumber"
+              name="whatsappNumber"
+              type="tel"
+              autoComplete="tel"
+              placeholder="Ex.: +55 51 99999-9999"
+              required
+              maxLength={25}
+              disabled={!contactLoaded || busy}
+              value={whatsappNumber}
+              onChange={(event) => {
+                setWhatsappNumber(event.target.value);
+                setSaved(false);
+              }}
+            />
+          </div>
           <button
             className="button"
-            type="button"
-            disabled={busy}
-            onClick={connect}
+            type="submit"
+            disabled={busy || !contactLoaded}
           >
-            {busy ? "Conectando…" : "Conectar Mercado Pago"}
+            {busy ? "Salvando…" : "Salvar WhatsApp"}
           </button>
-        )}
-        {connected === null && !error && <p>Consultando conexão…</p>}
+          {saved && <output>WhatsApp salvo.</output>}
+        </form>
       </section>
       <div className="account-section-heading">
         <h2>Meus anúncios</h2>

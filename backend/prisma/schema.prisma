@@ -47,7 +47,6 @@ enum NegotiationType {
 
 enum NegotiationStatus {
   PENDING
-  PENDING_PAYMENT
   APPROVED
   REJECTED
   CANCELLED
@@ -61,20 +60,11 @@ enum TradeOfferStatus {
   CANCELLED
 }
 
-enum PaymentStatus {
-  PENDING
-  APPROVED
-  REFUSED
-  EXPIRED
-  CANCELLED
-  REFUNDED
-  IN_DISPUTE
-}
-
 model User {
   id             String                   @id @default(uuid())
   name           String
   email          String                   @unique
+  whatsappNumber String?
   emailVerified  Boolean                  @default(false)
   image          String?
   role           UserRole                 @default(USER)
@@ -86,8 +76,6 @@ model User {
   listings       Listing[]
   participations NegotiationParticipant[]
   auditEvents    AuditEvent[]             @relation("ActorAuditEvents")
-  paymentAccount SellerPaymentAccount?
-  paymentOAuthStates MercadoPagoOAuthState[]
 
   @@map("User")
 }
@@ -138,7 +126,6 @@ model Negotiation {
   listing      Listing                  @relation("RequestedListing", fields: [listingId], references: [id])
   participants NegotiationParticipant[]
   tradeOffer   TradeOffer?
-  payment      Payment?
   auditEvents  AuditEvent[]
 }
 
@@ -159,61 +146,6 @@ model TradeOffer {
   status           TradeOfferStatus @default(PENDING)
   negotiation      Negotiation      @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
   offeredListing   Listing          @relation("OfferedListing", fields: [offeredListingId], references: [id])
-}
-
-model Payment {
-  id                String         @id @default(uuid())
-  negotiationId     String         @unique
-  providerPaymentId String?        @unique
-  providerPreferenceId String?     @unique
-  checkoutUrl       String?
-  marketplaceFee    Decimal        @default(0)
-  providerStatus    String?
-  providerUpdatedAt DateTime?
-  paymentMethodId   String?
-  amount            Decimal
-  status            PaymentStatus  @default(PENDING)
-  createdAt         DateTime       @default(now())
-  negotiation       Negotiation    @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
-  events            PaymentEvent[]
-}
-
-model SellerPaymentAccount {
-  id                    String   @id @default(uuid())
-  userId                String   @unique
-  providerUserId        String   @unique
-  accessTokenEncrypted  String
-  refreshTokenEncrypted String
-  tokenExpiresAt        DateTime
-  publicKey             String?
-  scope                 String?
-  status                String   @default("ACTIVE")
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model MercadoPagoOAuthState {
-  id        String   @id @default(uuid())
-  stateHash String   @unique
-  userId    String
-  expiresAt DateTime
-  consumedAt DateTime?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, expiresAt])
-}
-
-model PaymentEvent {
-  id              String    @id @default(uuid())
-  paymentId       String
-  providerEventId String    @unique
-  eventType       String
-  payloadHash     String
-  receivedAt      DateTime  @default(now())
-  processedAt     DateTime?
-  payment         Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
 }
 
 model AuditEvent {

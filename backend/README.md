@@ -1,6 +1,6 @@
 # MeLivrei API
 
-API REST do marketplace de livros usados, construída com NestJS 12, Prisma 7 e PostgreSQL 16. Vendas usam Mercado Pago Payment Brick com pagamentos pela Payments API; trocas permanecem no módulo de negociações e não passam pelo gateway.
+API REST do marketplace de livros usados, construída com NestJS 12, Prisma 7 e PostgreSQL 16. Vendas e trocas usam propostas sujeitas ao aceite do anunciante. O contato pelo WhatsApp só é liberado ao interessado participante após o aceite. Conversa, pagamentos e entrega ocorrem externamente.
 
 ## Desenvolvimento local
 
@@ -8,7 +8,7 @@ Requisitos: Node.js 24+, PostgreSQL 16+.
 
 ```bash
 cp .env.example .env
-# Configure DATABASE_URL e BETTER_AUTH_SECRET. Credenciais Mercado Pago são necessárias para testar OAuth e checkout.
+# Configure DATABASE_URL e BETTER_AUTH_SECRET.
 npm ci
 npm run prisma:generate
 npx prisma migrate deploy
@@ -30,61 +30,43 @@ protegida pelo navegador, autentique-se no mesmo host do backend: o cookie
 `better-auth.session_token` será enviado pela sessão. O servidor OpenAPI já
 aponta para o prefixo `/api`, portanto o **Try it out** usa as URLs corretas.
 
-O Compose na raiz ainda sincroniza schema com `prisma db push` para desenvolvimento. Ambientes persistentes devem aplicar migrações versionadas.
+O Compose na raiz e ambientes persistentes aplicam migrações versionadas com `prisma migrate deploy`.
 
-Em banco preexistente criado pelo `db push`, registre a migração de baseline uma vez (`npx prisma migrate resolve --applied 20261118000000_initial`) e então execute `npx prisma migrate deploy` para aplicar a migração Mercado Pago. Em banco vazio, `npx prisma migrate deploy` aplica baseline e integração em ordem.
+## Negociações e contato
 
-## Pagamentos e segurança
+`POST /api/negotiations/purchases` recebe somente `listingId`, cria proposta `SALE/PENDING` e reserva o anúncio, sem cobrança. O anunciante pode aceitar ou recusar propostas de venda e troca. O aceite exige WhatsApp cadastrado; a recusa libera os anúncios envolvidos. As decisões verificam `PENDING` dentro da transação para impedir sobrescrita ou repetição concorrente.
 
-O registro de uma compra é uma `Negotiation` do tipo `SALE`, que também funciona como referência do pedido. No checkout incorporado, o backend calcula o preço a partir do anúncio persistido, recebe do Payment Brick apenas os dados tokenizados e cria o pagamento com o access token OAuth cifrado do vendedor. O comprador pode usar Pix ou cartão de crédito. Para Pix, a API devolve QR Code e código copia e cola. Só o webhook validado e a consulta autenticada do pagamento no Mercado Pago aprovam o pedido. O fluxo legado de Checkout Pro ainda está disponível para chamadas da API sem `deferCheckout`.
-
-O split 1:1 só funciona quando a aplicação e a conta do vendedor estão habilitadas pelo Mercado Pago. `MERCADO_PAGO_SPLIT_ENABLED` deve ser `true` apenas após configuração/homologação do marketplace. A integração bloqueia vendas se não estiver habilitado ou se o vendedor não estiver vinculado. A comissão vem de `MERCADO_PAGO_MARKETPLACE_FEE_PERCENT` (padrão zero, sem percentual comercial presumido).
-
-Tokens OAuth são armazenados com AES-256-GCM. Gere a chave com `openssl rand -base64 32`, sem versioná-la. Webhooks usam `x-signature` HMAC-SHA256 e `x-request-id`, verificam janela temporal e consultam o pagamento remoto antes de persistir. Nunca use retorno do checkout como prova.
-
-Para OAuth, cadastre em Sua Integração a mesma URL definida em `MERCADO_PAGO_REDIRECT_URI`. Webhooks requerem URL HTTPS acessível publicamente; para desenvolvimento local use um túnel HTTPS e configure `MERCADO_PAGO_WEBHOOK_URL` e o segredo correspondente no painel. Use somente aplicação e usuários de teste.
+O número `User.whatsappNumber` é privado e atualizado apenas pela própria sessão. A API entrega o link `wa.me` somente ao interessado participante quando a negociação é `APPROVED` e existe evento de aceite registrado pelo anunciante. Aprovação financeira antiga não equivale a aceite. Listagens e detalhes não incluem o telefone; a autenticação não foi alterada para expor esse campo.
 
 ## Configuração
 
-Variáveis específicas estão em `.env.example`:
+Use `.env.example`: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `FRONTEND_URL` e `PORT`. Não há credenciais de pagamento ou serviço de mensagens. O WhatsApp é aberto por link externo, sem envio de mensagens pela API.
 
-- `MERCADO_PAGO_CLIENT_ID`, `MERCADO_PAGO_CLIENT_SECRET`: aplicação do integrador.
-- `MERCADO_PAGO_REDIRECT_URI`: callback OAuth.
-- `MERCADO_PAGO_TOKEN_ENCRYPTION_KEY`: chave AES-256-GCM em base64 (32 bytes decodificados).
-- `MERCADO_PAGO_WEBHOOK_SECRET`, `MERCADO_PAGO_WEBHOOK_URL`: assinatura e URL HTTPS pública.
-- `MERCADO_PAGO_ENVIRONMENT=test|production`: seleciona a URL de checkout a devolver.
-- `MERCADO_PAGO_SPLIT_ENABLED=false`: bloqueio seguro até configuração do split 1:1.
-- `MERCADO_PAGO_MARKETPLACE_FEE_PERCENT=0`: comissão configurável (0–100).
-- `MERCADO_PAGO_SUCCESS_URL`, `MERCADO_PAGO_FAILURE_URL`, `MERCADO_PAGO_PENDING_URL`: retornos do checkout.
+## Endpoints de negociação
 
-Não configure nem exponha tokens de vendedor manualmente. O OAuth os obtém e armazena cifrados. Para desligar conexão local, use o endpoint DELETE; a revogação remota deve ser feita também no painel Mercado Pago.
-
-## Endpoints
-
-Todas as rotas protegidas usam o cookie de sessão Better Auth.
+Todas estas rotas exigem cookie de sessão Better Auth.
 
 | Método | Rota | Acesso | Finalidade |
 |---|---|---|---|
-| GET | `/api/payments/mercadopago/connect` | Usuário autenticado | Retorna `authorizationUrl` OAuth com `state` CSRF |
-| GET | `/api/payments/mercadopago/callback` | Público, state obrigatório | Valida state de uso único e vincula conta |
-| GET | `/api/payments/mercadopago/connection` | Usuário autenticado | Status sem tokens |
-| DELETE | `/api/payments/mercadopago/connection` | Usuário autenticado | Remove vínculo local |
-| POST | `/api/negotiations/purchases` | Comprador autenticado | Cria negociação de venda; com `deferCheckout: true`, aguarda o Payment Brick |
-| POST | `/api/payments/negotiations/:id/checkout` | Comprador participante | Prepara valor e comprador para o Payment Brick |
-| POST | `/api/payments/negotiations/:id/submit` | Comprador participante | Cria pagamento Pix ou cartão com dados tokenizados |
-| GET | `/api/payments/negotiations/:id/pix` | Comprador participante | Recupera QR Code e código copia e cola do Pix pendente |
-| GET | `/api/payments` | Usuário autenticado | Lista apenas pagamentos das próprias negociações |
-| GET | `/api/negotiations/:id` | Participante | Consulta pagamento e estado da negociação |
-| POST | `/api/payments/webhook?data.id=:id` | Público, assinatura HMAC | Consulta e processa notificação de pagamento |
-| POST | `/api/negotiations/trades` | Usuário autenticado | Propõe troca sem gateway |
+| GET | `/api/negotiations/contact-profile` | Própria sessão | Consultar o próprio WhatsApp |
+| PATCH | `/api/negotiations/contact-profile` | Própria sessão | Atualizar com `{ "whatsappNumber": "5551999999999" }` |
+| POST | `/api/negotiations/purchases` | Interessado | Enviar proposta de compra com `listingId` |
+| POST | `/api/negotiations/trades` | Interessado | Propor troca com `listingId`, `offeredListingId` e mensagem opcional |
+| GET | `/api/negotiations/purchases` | Participante | Listar propostas de venda e troca |
+| GET | `/api/negotiations/:id` | Participante | Consultar proposta, histórico e `canContact`, sem telefone |
+| PATCH | `/api/negotiations/:id/accept` | Anunciante | Aceitar proposta pendente |
+| PATCH | `/api/negotiations/:id/reject` | Anunciante | Recusar proposta pendente |
+| GET | `/api/negotiations/:id/contact` | Interessado após aceite | Retornar `{ "url": "https://wa.me/5551999999999" }` |
 
-Exemplo de retorno de início OAuth: `{"authorizationUrl":"https://auth.mercadopago.com/authorization?..."}`. Após validar o callback, a API redireciona para o frontend configurado com `?mercado_pago=connected`. O checkout incorporado recebe o valor calculado no servidor e o status local; o retorno do pagamento Pix fornece QR Code e código copia e cola.
+O número deve conter código do país e DDD, com 8 a 15 dígitos e sem zero inicial. O formato não comprova que o número possui conta no WhatsApp. Terceiros recebem 404 para negociação e contato; participante sem aceite recebe 403; falta de número no aceite resulta em 400. Propostas já decididas são recusadas; conflito concorrente retorna 409. Rotas de pagamento, checkout, OAuth e webhook foram removidas.
 
-## Dados e limitações
+## Migração e dados existentes
 
-Migração `20261119000000_mercado_pago_marketplace` adiciona conta OAuth do vendedor, estados OAuth consumíveis, ID da preferência, URL de checkout, comissão, metadados do provedor e estados de pagamento cancelado/contestado. A negociação existente é reaproveitada como pedido, evitando duplicar participantes e anúncios. Trocas continuam sem pagamento.
+A migração `20261127000000_external_negotiation_contact` adiciona o telefone opcional, converte `PENDING_PAYMENT` em `PENDING` sem alterar a reserva existente e remove tabelas, enum e eventos de auditoria exclusivos de pagamento. Usuários, livros, anúncios, participantes, propostas e os demais eventos são preservados. Os demais estados históricos continuam iguais; aprovação financeira antiga não libera contato.
 
-Reembolsos não são iniciados pela API nesta versão. O webhook registra estados `refunded` e `charged_back`; o reembolso 1:1 depende do saldo do vendedor e da política comercial. Falha de renovação OAuth desabilita a conta até novo vínculo. A ativação comercial do split depende da configuração e homologação da aplicação no Mercado Pago e ainda deve ser validada com credenciais de teste.
+As migrações antigas devem permanecer no repositório para permitir upgrade de bancos já versionados e criação de bancos vazios em ordem. A nova migração elimina dados financeiros e tokens quando aplicada; faça backup antes de aplicá-la em banco persistente. Não foi executada sobre o banco local do projeto nesta alteração.
+
+Para bancos sem histórico de migração, criados por `db push`, confira primeiro quais estruturas existem. Se o schema corresponde ao baseline inicial, registre somente `20261118000000_initial` como aplicado. Se também contém integralmente as estruturas da segunda migração, registre também `20261119000000_mercado_pago_marketplace` como aplicada. Use `npx prisma migrate resolve --applied <nome>` somente após essa conferência e execute `npx prisma migrate deploy`. Não marque como aplicada uma migração cujas alterações estejam ausentes. Bancos vazios não precisam de baseline manual.
 
 ## Qualidade
 

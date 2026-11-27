@@ -1216,84 +1216,19 @@ output.action-box {
   }
 }
 
-.checkout-page {
-  max-width: 980px;
-}
-.checkout-grid {
+/* Layout da negociação, reaproveitando a composição do resumo anterior. */
+.negotiation-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   align-items: start;
   gap: 24px;
   margin-top: 24px;
 }
-.checkout-costs {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-}
-.checkout-costs div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-.checkout-costs div:last-child {
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
-  font-weight: 700;
-}
-.checkout-costs dd {
-  margin: 0;
-}
-.checkout-methods {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-.checkout-method {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 700;
-}
-.checkout-method.selected {
-  border-color: var(--green);
-  background: #edf2e9;
-}
-.checkout-card-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-.checkout-field-wide {
-  grid-column: 1 / -1;
-}
-.checkout-method input {
-  width: auto;
-  min-height: 0;
-  margin: 0;
-  accent-color: var(--green);
-}
-.checkout-pix-state {
-  display: grid;
-  gap: 12px;
-}
-.checkout-pix-qr {
-  display: block;
-  width: min(100%, 240px);
-  height: auto;
-}
 @media (max-width: 680px) {
-  .checkout-grid {
+  .negotiation-grid {
     grid-template-columns: 1fr;
   }
-  .checkout-grid aside {
+  .negotiation-grid aside {
     grid-row: 1;
-  }
-  .checkout-methods {
-    grid-template-columns: 1fr;
   }
 }
